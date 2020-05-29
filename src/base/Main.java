@@ -12,10 +12,12 @@ public class Main {
 			ratings.Step(m);
 		}
 		
+		printRatings(ratings);
+		
 		// TODO: Compare different ranking systems
 	}
 	
-	public void printRatings(RatingRun r) {
+	public static void printRatings(RatingRun r) {
 		Map<String, Integer> hm = new TreeMap<String, Integer>();
 		for (String s : r.players.keySet()) {
 			hm.put(s, (int)Math.floor(r.players.get(s)));
@@ -26,5 +28,9 @@ public class Main {
 		for(Map.Entry e : list) {
 			System.out.println(e.getKey()+ " " + e.getValue());
 		}
+	}
+	
+	public static void printTeam() {
+		
 	}
 }

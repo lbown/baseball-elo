@@ -22,7 +22,7 @@ public class Match {
 		team1Wins = Integer.parseInt(data[9]) > Integer.parseInt(data[10]);
 		// Starting Pitchers
 		
-		if(data[101].length() != 8 || data[103].length() != 8) {
+		if(data[101].length() != 10 || data[103].length() != 10) {
 			return;
 		}
 		team1.players.add(data[101]);
@@ -30,19 +30,23 @@ public class Match {
 		
 		// Visitor Batters
 		for (int i = 105; i < 132; i+=3) {
-			team1.players.add(data[i]);
-			if(data[i].length() !=8) {
-				System.out.println(data[i]);
+			if(data[i].length() !=10) {
+				team1 = new Team("");
+				team2 = new Team("");
 				return;
+			} else {
+				team1.players.add(data[i]);
 			}
 		}
 		
 		// Home Batters
 		for (int i = 132; i < 159; i+=3) {
-			team2.players.add(data[i]);
-			if(data[i].length() !=8) {
-				System.out.println(data[i]);
+			if(data[i].length() !=10) {
+				team1 = new Team("");
+				team2 = new Team("");
 				return;
+			} else {
+				team2.players.add(data[i]);
 			}
 		}
 	}
