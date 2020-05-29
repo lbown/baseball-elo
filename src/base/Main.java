@@ -12,7 +12,9 @@ public class Main {
 			ratings.Step(m);
 		}
 		
-		printRatings(ratings);
+		Team sea = ratings.teams.get("\"SEA\"");
+		printTeam(sea, ratings);
+		//printRatings(ratings);
 		
 		// TODO: Compare different ranking systems
 	}
@@ -30,7 +32,10 @@ public class Main {
 		}
 	}
 	
-	public static void printTeam() {
-		
+	public static void printTeam(Team t, RatingRun r) {
+		System.out.println(t.teamCode + ": " + t.elo + "Elo");
+		for(String s : t.players) {
+			System.out.println(s + " " + r.players.get(s));
+		}
 	}
 }

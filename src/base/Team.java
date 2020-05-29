@@ -9,6 +9,7 @@ public class Team {
 	public Team(String tc) {
 		teamCode = tc;
 		players = new HashSet<String>();
+		elo = 1500;
 	}
 	
 	public void updateElo(double change) {

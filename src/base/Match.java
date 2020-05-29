@@ -14,6 +14,7 @@ public class Match {
 	public Match(String line) {
 		String[] data = line.split(",");
 		for(String s : data) {
+			//TODO: This doesn't actually work for some reason...
 			s = s.replace("\"", "");
 		}
 
@@ -31,6 +32,7 @@ public class Match {
 		// Visitor Batters
 		for (int i = 105; i < 132; i+=3) {
 			if(data[i].length() !=10) {
+				// TODO: mark match as invalid data and don't process.
 				team1 = new Team("");
 				team2 = new Team("");
 				return;
