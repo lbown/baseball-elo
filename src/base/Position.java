@@ -8,7 +8,7 @@ public class Position {
 		posName = name;	
 	}
 	
-	public void updateContrib() {
+	public void UpdateContrib() {
 		
 	}
 }

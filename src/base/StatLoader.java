@@ -4,7 +4,7 @@ import java.io.*;
 import java.util.*;
 
 public class StatLoader {
-	ArrayList<Match> matches;
+	private List<Match> matches;
 	
 	public StatLoader(String dataFolderLoc) {
 		matches = new ArrayList<Match>();
@@ -28,6 +28,9 @@ public class StatLoader {
 			matches.add(m);
 		}
 		sc.close();
+	}
+	public List<Match> getMatches() {
+		return matches;
 	}
 	
 }

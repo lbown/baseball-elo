@@ -3,88 +3,125 @@ package base;
 import java.io.*;
 import java.util.*;
 
+/**
+ * This initializes and seeds player and organization objects. It also computes
+ * and stores the changes in ratings.
+ */
 public class RatingRun {
 	RatingMethod method;
-	Map<String, Double> players;
-	
-	/**
-	 * This stores the accumulation of all players to play for a team. The teams that are part of the
-	 * match data only store the players that participated that game.
-	 */
-	Map<String, Team> teams;
+	Map<String, Player> players;
+	Map<String, Organization> organizations;
 	double k;
 	int step;
 	File gameFile;
 	
-	public RatingRun(RatingMethod rm) {
-		method = rm;
-		players = new HashMap<String, Double>();
-		teams = new HashMap<String, Team>();
+	public RatingRun(List<Match> matches) {
+		players = new HashMap<String, Player>();
+		organizations = new HashMap<String, Organization>();
+		loadPlayersAndOrgs(matches);
 		step = 0;
 		k = 20;
 	}
 	
+	public RatingRun(RatingMethod rm, List<Match> matches) {
+		this(matches);
+		method = rm;
+	}
+	/**
+	 * 
+	 * @param m - Information about one match.
+	 */
 	public void Step(Match m) {
-		// Store teams from match and update the current players on the team
-		teams.putIfAbsent(m.team1.teamCode, m.team1);
-		teams.putIfAbsent(m.team2.teamCode, m.team2);
-
-		teams.get(m.team1.teamCode).players.addAll(m.team1.players);
-		teams.get(m.team2.teamCode).players.addAll(m.team2.players);
-		
-		for(String pID : m.team1.players) {
-			players.putIfAbsent(pID, 1500.0);
-		}
-		for(String pID : m.team2.players) {
-			players.putIfAbsent(pID, 1500.0);
-		}
-		
+		step++;
 		switch(method) {
 			case EloBlind:
 				StepEloBlind(m.team1, m.team2, m.team1Wins);
+			case EloOrg:
+				StepEloOrg(m.team1, m.team2, m.team1Wins);
 			default:
 				return;
 		}
-		
 	}
 	
 	private void StepEloBlind(Team team1, Team team2, boolean t1Won) {
-		double t1Avg = TeamAverage(team1.players);
-		double t2Avg = TeamAverage(team2.players);
+		double t1Avg = team1.ComputeTeamscore(players);
+		double t2Avg = team2.ComputeTeamscore(players);
 		double likelihoodT1Wins = 1/(1+Math.pow(10, (t2Avg-t1Avg)/400.0));
 		double likelihoodT2Wins = 1/(1+Math.pow(10, (t1Avg-t2Avg)/400.0));
 		double t1Update = k * ((t1Won ? 1 : 0) - likelihoodT1Wins);
 		double t2Update = k * ((t1Won ? 0 : 1) - likelihoodT2Wins);
 		
-		for(String pID : team1.players) {
-			players.put(pID, players.get(pID) + t1Update);
+		for(Player p : team1.getPlayers()) {
+			players.get(p.playerCode).updateElo(t1Update);
 		}
-		team1.updateElo(t1Update);
 		
-		for(String pID : team2.players) {
-			players.put(pID, players.get(pID) + t2Update);
+		for(Player p : team2.getPlayers()) {
+			players.get(p.playerCode).updateElo(t2Update);
 		}
-		team2.updateElo(t2Update);
 	}
 	
-	public double TeamAverage(Set<String> pIDs) {
-		double sum = 0;
-		for(String pID : pIDs) {
-			sum += players.get(pID);
-		}
-		return sum / pIDs.size();
+	private void StepEloOrg(Team team1, Team team2, boolean t1Won) {
+		double t1Elo = organizations.get(team1.teamCode).getElo();
+		double t2Elo = team2.ComputeTeamscore(players);
+		double likelihoodT1Wins = 1/(1+Math.pow(10, (t2Elo-t1Elo)/400.0));
+		double likelihoodT2Wins = 1/(1+Math.pow(10, (t1Elo-t2Elo)/400.0));
+		double t1Update = k * ((t1Won ? 1 : 0) - likelihoodT1Wins);
+		double t2Update = k * ((t1Won ? 0 : 1) - likelihoodT2Wins);
+		
+		organizations.get(team1.teamCode).updateElo(t1Update);
+		organizations.get(team2.teamCode).updateElo(t2Update);		
 	}
 	
-	public void ReseedPlayers() {
-		for (String pID : players.keySet()) {
-			players.put(pID, 1500.0);
+	private void loadPlayersAndOrgs(List<Match> matches) {
+		for(Match m : matches) {
+			Team[] ts = {m.team1, m.team2};
+			for(Team t : ts) {
+				if (!organizations.containsKey(t.teamCode)) {
+					Organization newOrg = new Organization(t.teamCode);
+					organizations.put(t.teamCode, newOrg);
+				}
+				for(Player p : t.getPlayers()) {
+					if (!players.containsKey(p.playerCode)) {
+						players.put(p.playerCode, p);
+					}
+					//TODO: Add players onto organization. Maybe orgs need a set of players that have played for them
+					// Maybe they need a running PlayerContribution for that player
+				}
+			}
+		}
+	}
+	
+	
+	public void processAllMatches(List<Match> matches) {
+		for(Match m : matches) {
+			Step(m);
+		}
+	}
+	/**
+	 * Resets the ratings of all of the players and organizations, as well as the state of this object
+	 * without needing to reload the data.
+	 */
+	public void reset() {
+		reseedPlayers();
+		reseedOrgs();
+		step = 0;
+	}
+	public void reseedPlayers() {
+		for(Player p : players.values()) {
+			p.initializeRating();
+		}
+	}
+	public void reseedOrgs() {
+		for(Organization o : organizations.values()) {
+			o.initializeRating();
 		}
 	}
 }
 
 enum RatingMethod {
 	EloBlind,
+	EloOrg,
 	EloContrib,
 	EloRole,
-	EloPairwise
+	BaseAppearance
 }

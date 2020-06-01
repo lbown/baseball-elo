@@ -4,25 +4,28 @@ import java.io.*;
 import java.util.*;
 
 public class Main {
+	static RatingRun ratings;
+	
 	public static void main(String[] args) {
-		StatLoader matchHistory = new StatLoader("C:/Users/logan/Documents/Research/BaseballStats/");
-		RatingRun ratings = new RatingRun(RatingMethod.EloBlind);
+		StatLoader sl = new StatLoader("C:/Users/logan/Documents/Research/BaseballStats/");
+		List<Match> matches = sl.getMatches();
 		
-		for (Match m : matchHistory.matches) {
-			ratings.Step(m);
-		}
+		ratings = new RatingRun(RatingMethod.EloBlind, matches);
 		
-		Team sea = ratings.teams.get("\"SEA\"");
-		printTeam(sea, ratings);
+		ratings.processAllMatches(matches);
+		
+		Organization org = ratings.organizations.get("\"NYA\"");
+		printOrg(org);
+		
 		//printRatings(ratings);
 		
 		// TODO: Compare different ranking systems
 	}
 	
-	public static void printRatings(RatingRun r) {
+	public static void printRatings() {
 		Map<String, Integer> hm = new TreeMap<String, Integer>();
-		for (String s : r.players.keySet()) {
-			hm.put(s, (int)Math.floor(r.players.get(s)));
+		for (String s : ratings.players.keySet()) {
+			hm.put(s, (int)Math.floor(ratings.players.get(s).getElo()));
 		}
 		List<Map.Entry<String, Integer>> list = new ArrayList<Map.Entry<String, Integer>>(hm.entrySet());
 		list.sort((p1, p2) -> (Integer.compare(p1.getValue(), p2.getValue())));
@@ -32,10 +35,15 @@ public class Main {
 		}
 	}
 	
-	public static void printTeam(Team t, RatingRun r) {
-		System.out.println(t.teamCode + ": " + t.elo + "Elo");
-		for(String s : t.players) {
-			System.out.println(s + " " + r.players.get(s));
+	public static void printOrg(Organization org) {
+		System.out.println(org.teamCode + ": " + org.getElo()+ " Elo");
+		for(Player p : org.getPlayers()) {
+			System.out.println(p.playerCode + " " + p.getElo());
+		}
+	}
+	public static void printAllOrgs() {
+		for(Organization o : ratings.organizations.values()) {
+			System.out.println(o.teamCode + ": " + o.getElo());
 		}
 	}
 }
