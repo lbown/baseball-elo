@@ -3,9 +3,11 @@ import java.util.*;
 
 public class Organization extends Team implements Rated {
 	ArrayList<Double> eloRatings;
+	List<String> playerCodes;
 	public Organization(String teamCode) {
 		super(teamCode);
 		initializeRating();
+		playerCodes = new ArrayList<String>();
 	}
 	@Override
 	public void initializeRating() {

@@ -2,28 +2,34 @@ package base;
 
 import java.util.*;
 
-import base.Team.PlayerContrib;
 /**
- * The {@code Match} class stores the statistics about one game of baseball including 
+ * The {@code Match} class stores the statistics about one game of baseball including the teams,
+ * events that happen during the game, etc.
  * @author logan
  *
  */
 public class Match {
-	Team team1; // Visitor	
+	String id;
+	Team team1; // Visitor
 	Team team2; // Home
 	boolean team1Wins;
+	boolean isCorrupt;
+	
 	public Match(String line) {
-		String[] data = line.split(",");
-		for(String s : data) {
-			//TODO: This doesn't actually work for some reason...
-			s = s.replace("\"", "");
+		String[] dataInit = line.split(",");
+		String[] data = new String[dataInit.length];
+		for(int i = 0; i < dataInit.length; i++) {
+			data[i] = dataInit[i].replace("\"", "");
 		}
 		team1 = new Team(data[3]);
 		team2 = new Team(data[6]);
 		team1Wins = Integer.parseInt(data[9]) > Integer.parseInt(data[10]);
-		// Starting Pitchers
 		
-		if(data[101].length() != 10 || data[103].length() != 10) {
+		id =  data[6] + data[0] + data[1];
+		
+		// Starting Pitchers
+		if(data[101].length() != 8 || data[103].length() != 8) {
+			isCorrupt = true;
 			team1 = new Team("");
 			team2 = new Team("");
 			return;
@@ -33,8 +39,8 @@ public class Match {
 		
 		// Visitor Batters
 		for (int i = 105; i < 132; i+=3) {
-			if(data[i].length() !=10) {
-				// TODO: mark match as invalid data and don't process.
+			if(data[i].length() != 8) {
+				isCorrupt = true;
 				team1 = new Team("");
 				team2 = new Team("");
 				return;
@@ -45,7 +51,8 @@ public class Match {
 		
 		// Home Batters
 		for (int i = 132; i < 159; i+=3) {
-			if(data[i].length() !=10) {
+			if(data[i].length() != 8) {
+				isCorrupt = true;
 				team1 = new Team("");
 				team2 = new Team("");
 				return;
@@ -53,5 +60,9 @@ public class Match {
 				team2.playerContribs.add(team2.new PlayerContrib(new Player(data[i], data[i+1]), 1));
 			}
 		}
+	}
+	
+	public void UpdateWithPlays(List<String> update) {
+		
 	}
 }

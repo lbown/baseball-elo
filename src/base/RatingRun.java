@@ -27,17 +27,22 @@ public class RatingRun {
 		this(matches);
 		method = rm;
 	}
+	
 	/**
 	 * 
 	 * @param m - Information about one match.
 	 */
 	public void Step(Match m) {
+		if(m.isCorrupt) return;
+		
 		step++;
 		switch(method) {
 			case EloBlind:
 				StepEloBlind(m.team1, m.team2, m.team1Wins);
+				break;
 			case EloOrg:
 				StepEloOrg(m.team1, m.team2, m.team1Wins);
+				break;
 			default:
 				return;
 		}
@@ -74,18 +79,22 @@ public class RatingRun {
 	
 	private void loadPlayersAndOrgs(List<Match> matches) {
 		for(Match m : matches) {
-			Team[] ts = {m.team1, m.team2};
-			for(Team t : ts) {
-				if (!organizations.containsKey(t.teamCode)) {
-					Organization newOrg = new Organization(t.teamCode);
-					organizations.put(t.teamCode, newOrg);
-				}
-				for(Player p : t.getPlayers()) {
-					if (!players.containsKey(p.playerCode)) {
-						players.put(p.playerCode, p);
+			if(!m.isCorrupt) {
+				Team[] ts = {m.team1, m.team2};
+				for(Team t : ts) {
+					if (!organizations.containsKey(t.teamCode)) {
+						Organization newOrg = new Organization(t.teamCode);
+						organizations.put(t.teamCode, newOrg);
 					}
-					//TODO: Add players onto organization. Maybe orgs need a set of players that have played for them
-					// Maybe they need a running PlayerContribution for that player
+					for(Player p : t.getPlayers()) {
+						if (!players.containsKey(p.playerCode)) {
+							players.put(p.playerCode, p);
+							organizations.get(t.teamCode).playerCodes.add(p.playerCode);
+						}
+						
+						//TODO: Add players onto organization. Maybe orgs need a set of players that have played for them
+						// Maybe they need a running PlayerContribution for that player
+					}
 				}
 			}
 		}
@@ -96,6 +105,10 @@ public class RatingRun {
 		for(Match m : matches) {
 			Step(m);
 		}
+		
+	}
+	public void processAllAppearances(List<BattingAppearance> appearances) {
+		
 	}
 	/**
 	 * Resets the ratings of all of the players and organizations, as well as the state of this object
@@ -106,11 +119,13 @@ public class RatingRun {
 		reseedOrgs();
 		step = 0;
 	}
+	
 	public void reseedPlayers() {
 		for(Player p : players.values()) {
 			p.initializeRating();
 		}
 	}
+	
 	public void reseedOrgs() {
 		for(Organization o : organizations.values()) {
 			o.initializeRating();
