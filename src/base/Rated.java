@@ -14,5 +14,14 @@ public interface Rated {
 	/**
 	 * @param update amount to adjust elo
 	 */
-	void updateElo(double update);
+	void updateElo(double update, String date);
+	
+	class EloDate {
+		double elo;
+		String date;
+		public EloDate(String date, double elo) {
+			this.elo = elo;
+			this.date = date;
+		}
+	}
 }

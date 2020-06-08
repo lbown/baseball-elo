@@ -5,6 +5,7 @@ import java.util.*;
 
 public class StatLoader {
 	private Map<String, Match> matches;
+	List<PlateAppearance> appearances;
 	
 	public StatLoader(String dataFolderLoc) {
 		String matchFolderLoc = dataFolderLoc + "Matches/";
@@ -37,7 +38,7 @@ public class StatLoader {
 	
 	/**
 	 * Goes through the entire play-by-play file, compiles the set of lines of that file, and pushes that
-	 * update to the match object
+	 * update to the match object. Also loads plate appearances.
 	 * 
 	 * @param f The file to augment matches with
 	 */

@@ -13,12 +13,12 @@ public class Team {
 	/**
 	 * @return The average Elo of everyone on their team
 	 */
-	public double AverageRating() {
+	public double AverageElo(Map<String, Player> players) {
 		double scoreSum = 0;
 		for(PlayerContrib pc : playerContribs) {
-			scoreSum += pc.player.getElo();
+			scoreSum += players.get(pc.player.playerCode).getElo();
 		}
-		return scoreSum/playerContribs.size();
+		return scoreSum/players.size();
 	}
 	
 	/**
@@ -41,14 +41,14 @@ public class Team {
 	/**
 	 * Adds a player to the team with contribution 1
 	 */
-	public void addPlayer(String playerCode, String playerName) {
-		addPlayer(playerCode, playerName, 1);
+	public void addPlayer(String playerCode, String playerName, Player.PosType ptype) {
+		addPlayer(playerCode, playerName, ptype, 1);
 	}
 	/**
 	 * Adds a player to the team with specified contribution factor
 	 */
-	public void addPlayer(String playerCode, String playerName, double contrib) {
-		Player p = new Player(playerCode, playerName);
+	public void addPlayer(String playerCode, String playerName, Player.PosType ptype, double contrib) {
+		Player p = new Player(playerCode, playerName, ptype);
 		playerContribs.add(new PlayerContrib(p, contrib));
 	}
 	/**

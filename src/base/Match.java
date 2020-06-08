@@ -2,6 +2,8 @@ package base;
 
 import java.util.*;
 
+import base.Player.PosType;
+
 /**
  * The {@code Match} class stores the statistics about one game of baseball including the teams,
  * events that happen during the game, etc.
@@ -14,6 +16,7 @@ public class Match {
 	Team team2; // Home
 	boolean team1Wins;
 	boolean isCorrupt;
+	String date;
 	
 	public Match(String line) {
 		String[] dataInit = line.split(",");
@@ -26,7 +29,7 @@ public class Match {
 		team1Wins = Integer.parseInt(data[9]) > Integer.parseInt(data[10]);
 		
 		id =  data[6] + data[0] + data[1];
-		
+		date = data[0];
 		// Starting Pitchers
 		if(data[101].length() != 8 || data[103].length() != 8) {
 			isCorrupt = true;
@@ -34,8 +37,9 @@ public class Match {
 			team2 = new Team("");
 			return;
 		}
-		team1.playerContribs.add(team1.new PlayerContrib(new Player(data[101], data[102]), 1));
-		team2.playerContribs.add(team2.new PlayerContrib(new Player(data[103], data[104]), 1));
+		
+		team1.playerContribs.add(team1.new PlayerContrib(new Player(data[101], data[102], PosType.Pitcher), 1));
+		team2.playerContribs.add(team2.new PlayerContrib(new Player(data[103], data[104], PosType.Pitcher), 1));
 		
 		// Visitor Batters
 		for (int i = 105; i < 132; i+=3) {
@@ -45,7 +49,7 @@ public class Match {
 				team2 = new Team("");
 				return;
 			} else {
-				team1.playerContribs.add(team1.new PlayerContrib(new Player(data[i], data[i+1]), 1));
+				team1.playerContribs.add(team1.new PlayerContrib(new Player(data[i], data[i+1], PosType.Batter), 1));
 			}
 		}
 		
@@ -57,11 +61,15 @@ public class Match {
 				team2 = new Team("");
 				return;
 			} else {
-				team2.playerContribs.add(team2.new PlayerContrib(new Player(data[i], data[i+1]), 1));
+				team2.playerContribs.add(team2.new PlayerContrib(new Player(data[i], data[i+1], PosType.Batter), 1));
 			}
 		}
 	}
 	
+	/**
+	 * Take the lines from an update file and parse them to correct and add to 
+	 * @param update
+	 */
 	public void UpdateWithPlays(List<String> update) {
 		
 	}

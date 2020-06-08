@@ -8,24 +8,37 @@ import java.util.*;
  * and stores the changes in ratings.
  */
 public class RatingRun {
-	RatingMethod method;
+	private RatingMethod method;
 	Map<String, Player> players;
 	Map<String, Organization> organizations;
 	double k;
 	int step;
 	File gameFile;
 	
-	public RatingRun(List<Match> matches) {
+	public RatingRun() {
 		players = new HashMap<String, Player>();
 		organizations = new HashMap<String, Organization>();
-		loadPlayersAndOrgs(matches);
 		step = 0;
 		k = 20;
 	}
-	
+	/**
+	 * Uses matches to update ratings. Requires method other than BaseAppearance
+	 */
 	public RatingRun(RatingMethod rm, List<Match> matches) {
-		this(matches);
+		this();
+		if(rm == RatingMethod.EloPlateAppearance) {
+			System.err.println("Must provide appearances for Plate Appearance routine.");
+			return;
+		} else {
+			loadPlayersAndOrgs(matches);
+		}
 		method = rm;
+	}
+	
+	public RatingRun(List<PlateAppearance> appearances) {
+		this();
+		loadPlayersFromAppearances(appearances);
+		method = RatingMethod.EloPlateAppearance;
 	}
 	
 	/**
@@ -38,45 +51,64 @@ public class RatingRun {
 		step++;
 		switch(method) {
 			case EloBlind:
-				StepEloBlind(m.team1, m.team2, m.team1Wins);
+				StepEloBlind(m);
 				break;
 			case EloOrg:
-				StepEloOrg(m.team1, m.team2, m.team1Wins);
+				StepEloOrg(m);
 				break;
 			default:
 				return;
 		}
 	}
-	
-	private void StepEloBlind(Team team1, Team team2, boolean t1Won) {
-		double t1Avg = team1.ComputeTeamscore(players);
-		double t2Avg = team2.ComputeTeamscore(players);
+	/**
+	 * Assumes that the team's likelihood of winning is equally impacted by all players on the team.
+	 * Computes the likelihood using an average and updates each player's rating using that likelihood.
+	 * @param m
+	 */
+	private void StepEloBlind(Match m) {
+		Team team1 = m.team1;
+		Team team2 = m.team2;
+		boolean t1Won = m.team1Wins;
+		
+		double t1Avg = team1.AverageElo(players);
+		double t2Avg = team2.AverageElo(players);
 		double likelihoodT1Wins = 1/(1+Math.pow(10, (t2Avg-t1Avg)/400.0));
 		double likelihoodT2Wins = 1/(1+Math.pow(10, (t1Avg-t2Avg)/400.0));
 		double t1Update = k * ((t1Won ? 1 : 0) - likelihoodT1Wins);
 		double t2Update = k * ((t1Won ? 0 : 1) - likelihoodT2Wins);
 		
 		for(Player p : team1.getPlayers()) {
-			players.get(p.playerCode).updateElo(t1Update);
+			players.get(p.playerCode).updateElo(t1Update, m.date);
 		}
 		
 		for(Player p : team2.getPlayers()) {
-			players.get(p.playerCode).updateElo(t2Update);
+			players.get(p.playerCode).updateElo(t2Update, m.date);
 		}
 	}
-	
-	private void StepEloOrg(Team team1, Team team2, boolean t1Won) {
+	/**
+	 * Treats each baseball team as it's own rated object and updates the team's rating using the
+	 * elo system.
+	 * @param m
+	 */
+	private void StepEloOrg(Match m) {
+		Team team1 = m.team1;
+		Team team2 = m.team2;
+		boolean t1Won = m.team1Wins;
+		
 		double t1Elo = organizations.get(team1.teamCode).getElo();
-		double t2Elo = team2.ComputeTeamscore(players);
+		double t2Elo = organizations.get(team2.teamCode).getElo();
 		double likelihoodT1Wins = 1/(1+Math.pow(10, (t2Elo-t1Elo)/400.0));
 		double likelihoodT2Wins = 1/(1+Math.pow(10, (t1Elo-t2Elo)/400.0));
 		double t1Update = k * ((t1Won ? 1 : 0) - likelihoodT1Wins);
 		double t2Update = k * ((t1Won ? 0 : 1) - likelihoodT2Wins);
 		
-		organizations.get(team1.teamCode).updateElo(t1Update);
-		organizations.get(team2.teamCode).updateElo(t2Update);		
+		organizations.get(team1.teamCode).updateElo(t1Update, m.date);
+		organizations.get(team2.teamCode).updateElo(t2Update, m.date);		
 	}
-	
+	/**
+	 * Load players and organizations for match based update methods.
+	 * @param matches
+	 */
 	private void loadPlayersAndOrgs(List<Match> matches) {
 		for(Match m : matches) {
 			if(!m.isCorrupt) {
@@ -99,7 +131,16 @@ public class RatingRun {
 			}
 		}
 	}
-	
+	/**
+	 * Load players only for appearance based rating
+	 * @param appearances
+	 */
+	private void loadPlayersFromAppearances(List<PlateAppearance> appearances) {
+		for (PlateAppearance p : appearances) {
+			players.put(p.batter.playerCode, p.batter);
+			players.put(p.pitcher.playerCode, p.pitcher);
+		}
+	}
 	
 	public void processAllMatches(List<Match> matches) {
 		for(Match m : matches) {
@@ -107,12 +148,28 @@ public class RatingRun {
 		}
 		
 	}
-	public void processAllAppearances(List<BattingAppearance> appearances) {
-		
+	public void processAllAppearances(List<PlateAppearance> appearances) {
+		for(PlateAppearance pa : appearances) {
+			String bcode = pa.batter.playerCode;
+			String pcode = pa.pitcher.playerCode;
+			double batterElo = players.get(bcode).batterElo();
+			double pitcherElo= players.get(pcode).pitcherElo();
+			
+			switch(method) {
+			case EloPlateAppearance:
+				double likelihoodBWins = 1/(1+Math.pow(10, (pitcherElo-batterElo)/400.0));
+				players.get(bcode).updateBatterElo(k * (pa.valueToBatter() - likelihoodBWins), pa.date);
+				players.get(pcode).updatePitcherElo(k * (likelihoodBWins - pa.valueToBatter()), pa.date);
+				break;
+			default:
+				break;
+			}
+		}
 	}
 	/**
 	 * Resets the ratings of all of the players and organizations, as well as the state of this object
-	 * without needing to reload the data.
+	 * without needing to reload the data. Need to reinit an object to transition between match and
+	 * appearance modes however.
 	 */
 	public void reset() {
 		reseedPlayers();
@@ -136,7 +193,8 @@ public class RatingRun {
 enum RatingMethod {
 	EloBlind,
 	EloOrg,
+	EloCarry,
 	EloContrib,
 	EloRole,
-	BaseAppearance
+	EloPlateAppearance
 }

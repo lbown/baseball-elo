@@ -1,8 +1,9 @@
 package base;
 import java.util.*;
 
+
 public class Organization extends Team implements Rated {
-	ArrayList<Double> eloRatings;
+	ArrayList<EloDate> eloRatings;
 	List<String> playerCodes;
 	public Organization(String teamCode) {
 		super(teamCode);
@@ -11,17 +12,18 @@ public class Organization extends Team implements Rated {
 	}
 	@Override
 	public void initializeRating() {
-		eloRatings = new ArrayList<Double>();
-		eloRatings.add(1500.);
+		eloRatings = new ArrayList<EloDate>();
 	}
 	@Override
 	public double getElo() {
-		return eloRatings.get(eloRatings.size() - 1);
+		if(eloRatings.size() == 0) {
+			return 1500;
+		}
+		return eloRatings.get(eloRatings.size() - 1).elo;
 	}
 	@Override
-	public void updateElo(double update) {
-		eloRatings.add(getElo() + update);
+	public void updateElo(double update, String date) {
+		eloRatings.add(new EloDate(date, getElo() + update));
 	}
-	
 	
 }

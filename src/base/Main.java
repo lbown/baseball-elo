@@ -9,13 +9,14 @@ public class Main {
 		StatLoader sl = new StatLoader("C:/Users/logan/Documents/Research/BaseballStats/");
 		List<Match> matches = sl.getMatches();
 		
-		ratings = new RatingRun(RatingMethod.EloOrg, matches);
+		ratings = new RatingRun(RatingMethod.EloBlind, matches);
 		
 		ratings.processAllMatches(matches);
 		
 		Organization org = ratings.organizations.get("NYA");
 		
-		printAllOrgs();
+		//printAllOrgs();
+		printRatings();
 		
 		// TODO: Compare different ranking systems
 	}
