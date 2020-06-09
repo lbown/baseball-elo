@@ -4,13 +4,12 @@ import java.io.*;
 import java.util.*;
 
 public class StatLoader {
-	private Map<String, Match> matches;
-	List<PlateAppearance> appearances;
+	private Map<String, Match> matches = new HashMap<String, Match>();
+	List<PlateAppearance> appearances = new ArrayList<PlateAppearance>();
 	
 	public StatLoader(String dataFolderLoc) {
 		String matchFolderLoc = dataFolderLoc + "Matches/";
 		String playbyplayLoc = dataFolderLoc + "Plays/";
-		matches = new HashMap<String, Match>();
 		for (File f : new File(matchFolderLoc).listFiles()) {
 			AddMatchData(f);
 		}
@@ -64,14 +63,20 @@ public class StatLoader {
 	
 	private void pushUpdate(List<String> matchUpdate) {
 		String id = matchUpdate.get(0).substring(3);
+		if(matches.get(id).isCorrupt) return;
+		
 		if (matches.containsKey(id) == false) {
 			System.out.println("Can't find match " + id + ".");
 		}
 		matches.get(id).UpdateWithPlays(matchUpdate);
+		appearances.addAll(matches.get(id).appearances);
 	}
 	
 	public List<Match> getMatches() {
 		return new ArrayList<Match>(matches.values());
 	}
 	
+	public List<PlateAppearance> getAppearances() {
+		return appearances;
+	}
 }

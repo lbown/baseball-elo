@@ -1,6 +1,8 @@
 package base;
 import java.util.*;
 
+import base.Player.PosType;
+
 public class Team {
 	String teamCode;
 	ArrayList<PlayerContrib> playerContribs;
@@ -62,7 +64,22 @@ public class Team {
 		}
 		return players;
 	}
-	
+	public Player getPlayer(String code) {
+		for (PlayerContrib pc : playerContribs) {
+			if (pc.player.playerCode.equals(code)) {
+				return pc.player;
+			}
+		}
+		return null;
+	}
+	public Player getStartPitcher() {
+		for (Player p : getPlayers()) {
+			if(p.pos == PosType.Pitcher) return p;
+		}
+		System.err.println("None found");
+		return null;
+		
+	}
 	/**
 	 * Supporting class to keep track of the contribution to a particular game that players have
 	 * @author Logan
@@ -71,8 +88,7 @@ public class Team {
 	class PlayerContrib {
 		Player player;
 		double contrib;
-		//TODO: might need to extend this to interact with the player role: contribution
-		// With respect to number of plate appearances/time in field versus pitching amount
+		int numPlays;
 		PlayerContrib(Player p, double c) {
 			player = p;
 			contrib = c;

@@ -9,15 +9,13 @@ import java.util.*;
  */
 public class RatingRun {
 	private RatingMethod method;
-	Map<String, Player> players;
-	Map<String, Organization> organizations;
+	Map<String, Player> players = new HashMap<String, Player>();
+	Map<String, Organization> organizations = new HashMap<String, Organization>();
 	double k;
 	int step;
 	File gameFile;
 	
 	public RatingRun() {
-		players = new HashMap<String, Player>();
-		organizations = new HashMap<String, Organization>();
 		step = 0;
 		k = 20;
 	}
@@ -137,6 +135,11 @@ public class RatingRun {
 	 */
 	private void loadPlayersFromAppearances(List<PlateAppearance> appearances) {
 		for (PlateAppearance p : appearances) {
+			if (p == null) System.out.println("p null");
+			if (players == null) System.out.println("players null");
+			if (p.batter == null) System.out.println("batter null");
+			if (p.pitcher == null) System.out.println("pitcher null");
+			
 			players.put(p.batter.playerCode, p.batter);
 			players.put(p.pitcher.playerCode, p.pitcher);
 		}
@@ -148,7 +151,7 @@ public class RatingRun {
 		}
 		
 	}
-	public void processAllAppearances(List<PlateAppearance> appearances) {
+	public void processAllAppearances(List<PlateAppearance> appearances, String appearanceScore) {
 		for(PlateAppearance pa : appearances) {
 			String bcode = pa.batter.playerCode;
 			String pcode = pa.pitcher.playerCode;
@@ -158,8 +161,10 @@ public class RatingRun {
 			switch(method) {
 			case EloPlateAppearance:
 				double likelihoodBWins = 1/(1+Math.pow(10, (pitcherElo-batterElo)/400.0));
-				players.get(bcode).updateBatterElo(k * (pa.valueToBatter() - likelihoodBWins), pa.date);
-				players.get(pcode).updatePitcherElo(k * (likelihoodBWins - pa.valueToBatter()), pa.date);
+				players.get(bcode).updateBatterElo(
+						k/8 * (pa.valueToBatter(appearanceScore) - likelihoodBWins), pa.date);
+				players.get(pcode).updatePitcherElo(
+						k/8 * (likelihoodBWins - pa.valueToBatter(appearanceScore)), pa.date);
 				break;
 			default:
 				break;

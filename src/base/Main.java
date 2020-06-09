@@ -7,30 +7,35 @@ public class Main {
 	
 	public static void main(String[] args) {
 		StatLoader sl = new StatLoader("C:/Users/logan/Documents/Research/BaseballStats/");
+		
 		List<Match> matches = sl.getMatches();
+		List<PlateAppearance> apps = sl.getAppearances();
 		
+		//ratings = new RatingRun(apps);
 		ratings = new RatingRun(RatingMethod.EloBlind, matches);
-		
+		//ratings.processAllAppearances(apps, "Weighted");
 		ratings.processAllMatches(matches);
-		
-		Organization org = ratings.organizations.get("NYA");
-		
 		//printAllOrgs();
 		printRatings();
-		
+/**
+		System.out.println(ratings.players.get("heywj001").eloBatter.size());
+		for(Rated.EloDate ed : ratings.players.get("heywj001").eloBatter) {
+			System.out.print(ed.elo + ", ");
+		}
+		*/
 		// TODO: Compare different ranking systems
 	}
 	
 	public static void printRatings() {
 		Map<String, Integer> hm = new TreeMap<String, Integer>();
 		for (String s : ratings.players.keySet()) {
-			hm.put(ratings.players.get(s).playerName, (int)Math.floor(ratings.players.get(s).getElo()));
+			hm.put(ratings.players.get(s).playerName + " - " + ratings.players.get(s).pos.toString(), (int)Math.floor(ratings.players.get(s).getElo()));
 		}
 		List<Map.Entry<String, Integer>> list = new ArrayList<Map.Entry<String, Integer>>(hm.entrySet());
 		list.sort((p1, p2) -> (Integer.compare(p1.getValue(), p2.getValue())));
 		
 		for(Map.Entry<String, Integer> e : list) {
-			System.out.println(e.getKey()+ " " + e.getValue());
+			System.out.println(e.getKey()+ ": " + e.getValue());
 		}
 	}
 	
@@ -41,7 +46,7 @@ public class Main {
 		System.out.println(org.teamCode + ": " + org.getElo()+ " Elo");
 		for(String pc : org.playerCodes) {
 			Player p = ratings.players.get(pc);
-			System.out.println(p.playerName + " " + p.getElo());
+			System.out.println(p.playerName + ": " + p.getElo());
 		}
 	}
 	
