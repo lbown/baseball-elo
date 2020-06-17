@@ -20,7 +20,7 @@ public class Team {
 		for(PlayerContrib pc : playerContribs) {
 			scoreSum += players.get(pc.player.playerCode).getElo();
 		}
-		return scoreSum/players.size();
+		return scoreSum/playerContribs.size();
 	}
 	
 	/**
@@ -35,8 +35,8 @@ public class Team {
 		double contribSum = 0;
 		double scoreSum = 0;
 		for(PlayerContrib pc : playerContribs) {
-			scoreSum += players.get(pc.player.playerCode).getElo() * pc.contrib;
-			contribSum += pc.contrib;
+			scoreSum += players.get(pc.player.playerCode).getElo() * pc.getContrib();
+			contribSum += pc.getContrib();
 		}
 		return scoreSum/contribSum;
 	}
@@ -72,13 +72,54 @@ public class Team {
 		}
 		return null;
 	}
+	public PlayerContrib getPC(String code) {
+		for (PlayerContrib pc : playerContribs) {
+			if (pc.player.playerCode.equals(code))
+				return pc;
+		}
+		return null;
+	}
 	public Player getStartPitcher() {
 		for (Player p : getPlayers()) {
 			if(p.pos == PosType.Pitcher) return p;
 		}
 		System.err.println("None found");
 		return null;
-		
+	}
+	/**
+	 * Adds a contribution from a particular player to their playercontribution
+	 * @param playerCode
+	 */
+	public void addBatContrib(String playerCode) {
+		for (PlayerContrib pc : playerContribs) {
+			if (pc.player.playerCode.equals(playerCode)) {
+				pc.numBats += 1;
+			}
+		}
+	}
+	public void addPitchContrib(String playerCode) {
+		for (PlayerContrib pc : playerContribs) {
+			if (pc.player.playerCode.equals(playerCode)) {
+				pc.appearancesPitched += 1;
+			}
+		}
+	}
+	public void addOutfieldContrib(String playerCode) {
+		for (PlayerContrib pc : playerContribs) {
+			if (pc.player.playerCode.equals(playerCode)) {
+				pc.timeDefending += 1;
+			}
+		}
+	}
+	public void setTeamBats(int num) {
+		for (PlayerContrib pc : playerContribs) {
+				pc.totalTeamBats = num;
+		}
+	}
+	public void setOppTeamBats(int num) {
+		for (PlayerContrib pc : playerContribs) {
+				pc.totalOpposingBats = num;
+		}
 	}
 	/**
 	 * Supporting class to keep track of the contribution to a particular game that players have
@@ -87,11 +128,26 @@ public class Team {
 	 */
 	class PlayerContrib {
 		Player player;
-		double contrib;
-		int numPlays;
+		int numBats = 0;
+		int totalTeamBats = 0;
+		int timeDefending = 0;
+		int appearancesPitched = 0;
+		int totalOpposingBats = 0;
+		final double defenseWeight = 0.5;
+		
 		PlayerContrib(Player p, double c) {
 			player = p;
-			contrib = c;
+		}
+		/**
+		 * 
+		 * @return An amount of contribution to the game. When rating is updated, 
+		 */
+		public double getContrib() {
+			if (player.pos == PosType.Pitcher)
+			return (numBats/totalTeamBats) * (1-defenseWeight) + (timeDefending / totalOpposingBats) * defenseWeight;
+			else
+			return appearancesPitched / totalOpposingBats;
+			// This doesn't quite solve the problem of closing pitchers
 		}
 	}
 }

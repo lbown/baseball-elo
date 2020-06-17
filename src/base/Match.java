@@ -96,9 +96,13 @@ public class Match {
 				if(line[2].contentEquals("0")) {
 					pitcher = homePitcher;
 					batter = team1.getPlayer(line[3]);
+					team1.addBatContrib(batter.playerCode);
+					team2.addPitchContrib(pitcher.playerCode);
 				} else if (line[2].contentEquals("1")) {
 					pitcher = visPitcher;
 					batter = team2.getPlayer(line[3]);
+					team1.addPitchContrib(pitcher.playerCode);
+					team2.addBatContrib(batter.playerCode);
 				} else {
 					System.err.println("UH OH");
 				}
@@ -134,7 +138,7 @@ public class Match {
 					}
 				} else {
 					homePitcher = new Player(line[1], line[2].replace("\"", ""), PosType.Pitcher);
-					if(team1.getPlayer(line[1]) == null) {
+					if(team2.getPlayer(line[1]) == null) {
 						team2.addPlayer(line[1], line[2].replace("\"", ""), PosType.Pitcher);
 					}
 				}
@@ -144,7 +148,7 @@ public class Match {
 						team1.addPlayer(line[1], line[2].replace("\"", ""), PosType.Batter);
 					}
 				} else {
-					if(team1.getPlayer(line[1]) == null) {
+					if(team2.getPlayer(line[1]) == null) {
 						team2.addPlayer(line[1], line[2].replace("\"", ""), PosType.Batter);
 					}
 				}

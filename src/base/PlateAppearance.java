@@ -1,9 +1,12 @@
 package base;
 
+import java.util.Date;
+
 public class PlateAppearance{
 	Player batter;
 	Player pitcher;
 	String date;
+	Date dateObj;
 	Outcome outcome;
 	
 	public PlateAppearance (Player b, Player p, Outcome o, String d) {
@@ -11,6 +14,9 @@ public class PlateAppearance{
 		pitcher = p;
 		outcome = o;
 		date = d;
+		dateObj = new Date(Integer.parseInt(d.substring(0,4)),
+				   Integer.parseInt(d.substring(4,6)),
+				   Integer.parseInt(d.substring(6)));
 	}
 	
 	/**
@@ -24,7 +30,7 @@ public class PlateAppearance{
 			return outcome.bip;
 		} else {
 			return outcome.weighted;
-		} 
+		}
 	}
 	enum Outcome {
 		Walk (1, 1, 0.6),
@@ -42,7 +48,7 @@ public class PlateAppearance{
 		double tto;
 		double bip;
 		double weighted;
-		Outcome(double t, double b, double w){
+		Outcome(double t, double b, double w) {
 			tto = t;
 			bip = b;
 			weighted = w;

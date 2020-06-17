@@ -1,6 +1,8 @@
 package base;
 
 import java.io.*;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class StatLoader {
@@ -8,8 +10,8 @@ public class StatLoader {
 	List<PlateAppearance> appearances = new ArrayList<PlateAppearance>();
 	
 	public StatLoader(String dataFolderLoc) {
-		String matchFolderLoc = dataFolderLoc + "Matches/";
-		String playbyplayLoc = dataFolderLoc + "Plays/";
+		String matchFolderLoc = dataFolderLoc + "2010Matches/";
+		String playbyplayLoc = dataFolderLoc + "2010Plays/";
 		for (File f : new File(matchFolderLoc).listFiles()) {
 			AddMatchData(f);
 		}
@@ -36,7 +38,8 @@ public class StatLoader {
 	}
 	
 	/**
-	 * Goes through the entire play-by-play file, compiles the set of lines of that file, and pushes that
+	 * Goes through the entire play-by-play file, compiles the set of lines
+	 * of that file, and pushes that
 	 * update to the match object. Also loads plate appearances.
 	 * 
 	 * @param f The file to augment matches with
@@ -63,8 +66,7 @@ public class StatLoader {
 	
 	private void pushUpdate(List<String> matchUpdate) {
 		String id = matchUpdate.get(0).substring(3);
-		if(matches.get(id).isCorrupt) return;
-		
+		if(matches.get(id).isCorrupt) return;		
 		if (matches.containsKey(id) == false) {
 			System.out.println("Can't find match " + id + ".");
 		}
@@ -73,10 +75,30 @@ public class StatLoader {
 	}
 	
 	public List<Match> getMatches() {
-		return new ArrayList<Match>(matches.values());
+		// Sort by date
+		ArrayList<Map.Entry<String, Match>> entries =
+				new ArrayList<Map.Entry<String, Match>>(matches.entrySet());
+		entries.sort((e1,e2) -> compareEntries(e1, e2));
+		ArrayList<Match> ret = new ArrayList<Match>();
+		for (Map.Entry<String, Match> e : entries) {
+			ret.add(e.getValue());
+		}
+		return ret;
+	}
+	private int compareEntries(Map.Entry<String, Match> e1, Map.Entry<String, Match> e2) {
+		String s1 = e1.getKey();
+		String s2 = e2.getKey();
+		Date d1 = new Date(Integer.parseInt(s1.substring(3,7)),
+						   Integer.parseInt(s1.substring(7,9)),
+						   Integer.parseInt(s1.substring(9, 11)));
+		Date d2 = new Date(Integer.parseInt(s2.substring(3,7)),
+					       Integer.parseInt(s2.substring(7,9)),
+				           Integer.parseInt(s2.substring(9, 11)));
+		return d1.compareTo(d2);
 	}
 	
 	public List<PlateAppearance> getAppearances() {
+		appearances.sort((a1, a2) -> a1.dateObj.compareTo(a2.dateObj));
 		return appearances;
 	}
 }
