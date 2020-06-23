@@ -133,7 +133,7 @@ public class Team {
 		int timeDefending = 0;
 		int appearancesPitched = 0;
 		int totalOpposingBats = 0;
-		final double defenseWeight = 0.5;
+		final double defenseWeight = 0.2;
 		
 		PlayerContrib(Player p, double c) {
 			player = p;
@@ -144,7 +144,7 @@ public class Team {
 		 */
 		public double getContrib() {
 			if (player.pos == PosType.Pitcher)
-			return (numBats/totalTeamBats) * (1-defenseWeight) + (timeDefending / totalOpposingBats) * defenseWeight;
+			return (numBats * 9/totalTeamBats) * (1-defenseWeight) + (timeDefending / totalOpposingBats) * defenseWeight;
 			else
 			return appearancesPitched / totalOpposingBats;
 			// This doesn't quite solve the problem of closing pitchers

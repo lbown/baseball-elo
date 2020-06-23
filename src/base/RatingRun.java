@@ -4,6 +4,7 @@ import java.io.*;
 import java.util.*;
 
 import base.Player.PosType;
+import base.Rated.EloDate;
 
 /**
  * This initializes and seeds player and organization objects. It also computes
@@ -41,6 +42,12 @@ public class RatingRun {
 		loadPlayersFromAppearances(appearances);
 		method = RatingMethod.EloGammaAdjust;
 	}
+	public RatingRun(RatingMethod rm, List<Match> matches, List<PlateAppearance> appearances) {
+		this();
+		loadPlayersAndOrgs(matches);
+		loadPlayersFromAppearances(appearances);
+		method = rm;
+	}
 	
 	/**
 	 * 
@@ -56,6 +63,9 @@ public class RatingRun {
 				break;
 			case EloOrg:
 				StepEloOrg(m);
+				break;
+			case EloCombined:
+				StepCombined(m);
 				break;
 			default:
 				return;
@@ -92,7 +102,7 @@ public class RatingRun {
 	 * their contribution to the game.
 	 * @param m
 	 */
-	private void StepEloContrib(Match m) {
+	private void StepCombined(Match m) {
 		Team team1 = m.team1;
 		Team team2 = m.team2;
 		boolean t1Won = m.team1Wins;
@@ -104,13 +114,30 @@ public class RatingRun {
 		double t1Update = k * ((t1Won ? 1 : 0) - likelihoodT1Wins);
 		double t2Update = k * ((t1Won ? 0 : 1) - likelihoodT2Wins);
 		
+		processAllAppearances(m.appearances, "Weighted");
+		
 		for(Player p : team1.getPlayers()) {
-			players.get(p.playerCode).updateElo(t1Update, m.date);
+			int num = 0;
+			for(PlateAppearance pa : m.appearances) {
+				if(pa.batter.playerCode == p.playerCode ||
+				   pa.pitcher.playerCode == p.playerCode)
+						num++;
+			}
+			
+			if ((p.pos == PosType.Batter && num > 1) || (p.pos == PosType.Pitcher && num > 6))
+				players.get(p.playerCode).updateElo(t1Update, m.date);
 		}
 		
 		for(Player p : team2.getPlayers()) {
-
-			players.get(p.playerCode).updateElo(t2Update, m.date);
+			int num = 0;
+			for(PlateAppearance pa : m.appearances) {
+				if(pa.batter.playerCode == p.playerCode ||
+				   pa.pitcher.playerCode == p.playerCode)
+						num++;
+			}
+			
+			if ((p.pos == PosType.Batter && num > 1) || (p.pos == PosType.Pitcher && num > 6))
+				players.get(p.playerCode).updateElo(t2Update, m.date);
 		}
 	}
 	/**
@@ -152,8 +179,6 @@ public class RatingRun {
 							organizations.get(t.teamCode).playerCodes.add(p.playerCode);
 						}
 						
-						//TODO: Add players onto organization. Maybe orgs need a set of players that have played for them
-						// Maybe they need a running PlayerContribution for that player
 					}
 				}
 			}
@@ -196,13 +221,14 @@ public class RatingRun {
 				players.get(pcode).updatePitcherElo(
 						k/8 * (likelihoodBWins - pa.valueToBatter(appearanceScore)), pa.date);
 				break;
+			case EloCombined:
 			case EloGammaAdjust:
 				int gamma = 121;
 				likelihoodBWins = 1/(1+Math.pow(10, (pitcherElo + gamma - batterElo)/400.0));
 				players.get(bcode).updateBatterElo(
-						k/3 * (pa.valueToBatter(appearanceScore) - likelihoodBWins), pa.date);
+						k/4 * (pa.valueToBatter(appearanceScore) - likelihoodBWins), pa.date);
 				players.get(pcode).updatePitcherElo(
-						k/3 * (likelihoodBWins - pa.valueToBatter(appearanceScore)), pa.date);
+						k/4 * (likelihoodBWins - pa.valueToBatter(appearanceScore)), pa.date);
 				break;
 			default:
 				break;
@@ -297,6 +323,18 @@ public class RatingRun {
 		}
 		System.out.println("Batter avg: " + batterElo/numBatters + " Pitcher avg: " + pitcherElo/numPitchers + " Diff: " + (batterElo/numBatters - pitcherElo/numPitchers));
 	}
+	public void printPlayerRatings(String playerCode) {
+		Player p = players.get(playerCode);
+		System.out.print("Batter:");
+		for(EloDate e : p.eloBatter) {
+			System.out.print(" " + e.elo + ",");
+		}
+		System.out.println();
+		System.out.print("Pitcher:");
+		for(EloDate e : p.eloPitcher) {
+			System.out.print(" " + e.elo + ",");
+		}
+	}
 	
 	public void playerGameEloDateToCSV(String file, int minGames) {
 		try {
@@ -352,7 +390,6 @@ enum RatingMethod {
 	EloBlind,
 	EloOrg,
 	EloCarry,
-	EloContrib,
-	EloRole,
+	EloCombined,
 	EloPlateAppearance, EloGammaAdjust
 }

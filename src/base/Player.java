@@ -6,6 +6,7 @@ public class Player implements Rated {
 	String playerName;
 	ArrayList<EloDate> eloBatter;
 	ArrayList<EloDate> eloPitcher;
+	double pbpUpdateThisMatch = 0;
 	PosType pos;
 	
 	Player(String pc, String name, PosType ptype) {

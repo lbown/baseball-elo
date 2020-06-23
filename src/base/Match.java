@@ -78,6 +78,8 @@ public class Match {
 		String date = update.get(0).substring(6,14);
 		Player visPitcher = team1.getStartPitcher();
 		Player homePitcher = team2.getStartPitcher();
+		ArrayList<Player> homeOutfield = new ArrayList<Player>();
+		ArrayList<Player> visOutfield = new ArrayList<Player>();
 		
 		for(String s : update) {
 			String[] line = s.split(",");
