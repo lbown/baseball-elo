@@ -8,8 +8,8 @@ public class Main {
 
 	
 	public static void main(String[] args) {
-		StatLoader sl = new StatLoader("C:/Users/logan/Documents/Research/BaseballStats/2000-2018/");
-		StatLoader sl2 = new StatLoader("C:/Users/logan/Documents/Research/BaseballStats/2019/");
+		StatLoader sl = new StatLoader("GameData/2000-2018/");
+		StatLoader sl2 = new StatLoader("GameData/2019/");
 		
 		List<Match> matches = sl.getMatches();
 		List<PlateAppearance> apps = sl.getAppearances();
