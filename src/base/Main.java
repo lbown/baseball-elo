@@ -15,31 +15,34 @@ public class Main {
 		List<PlateAppearance> apps = sl.getAppearances();
 		
 
-		List<Match> matches2 = sl.getMatches();
-		List<PlateAppearance> apps2 = sl.getAppearances();
+		List<Match> matches2 = sl2.getMatches();
+		List<PlateAppearance> apps2 = sl2.getAppearances();
 		
-//		RatingRun ratings = new RatingRun(apps);
+		RatingRun ratings = new RatingRun(apps);
+		RatingRun ratings2 = new RatingRun(apps2);
 //		RatingRun ratings = new RatingRun(RatingMethod.EloBlind, matches);
-		RatingRun ratings = new RatingRun(RatingMethod.EloCombined, matches, apps);
-		
-		RatingRun ratings2 = new RatingRun(RatingMethod.EloCombined, matches2, apps2);
+//		RatingRun ratings2 = new RatingRun(RatingMethod.EloBlind, matches2);
+//		RatingRun ratings = new RatingRun(RatingMethod.EloCombined, matches, apps);
+//		RatingRun ratings2 = new RatingRun(RatingMethod.EloCombined, matches2, apps2);
 		
 //		ratings.processAllAppearances(apps, "Weighted");
-		ratings.processAllMatches(matches);
-		ratings2.processAllMatches(matches2);
+//		ratings2.processAllAppearances(apps2, "Weighted");
+//		ratings.processAllMatches(matches);
+//		ratings2.processAllMatches(matches2);
 		
 		ArrayList<Player> diffs = new ArrayList<Player>();
 		
 		for (Player p : ratings2.players.values()) {
 			if (ratings.players.containsKey(p.playerCode)) {
 				Player newP = new Player(p.playerCode, p.playerName, p.pos);
+				System.out.println(p.getElo() + " " + ratings.players.get(p.playerCode).getElo());
 				newP.updateElo(-1500+(p.getElo() - ratings.players.get(p.playerCode).getElo()), "");
 				diffs.add(newP);
 			}
 		}
 		
 		try {
-			FileWriter csvWriter = new FileWriter("C:/Users/logan/Documents/Game Dev/Eclipse Workspace/ELOCompute/Diffs.csv");
+			FileWriter csvWriter = new FileWriter("Test.csv");
 			csvWriter.append("Name,Position,Diff");
 			for (Player p : diffs) {
 				csvWriter.append("\n" + p.playerName + "," + p.pos + "," + p.getElo());
