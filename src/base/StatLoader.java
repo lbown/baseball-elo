@@ -10,8 +10,9 @@ public class StatLoader {
 	List<PlateAppearance> appearances = new ArrayList<PlateAppearance>();
 	
 	public StatLoader(String dataFolderLoc) {
-		String matchFolderLoc = dataFolderLoc + "2010Matches/";
-		String playbyplayLoc = dataFolderLoc + "2010Plays/";
+		String matchFolderLoc = dataFolderLoc + "Matches/";
+		String playbyplayLoc = dataFolderLoc + "Plays/";
+		System.out.println(matchFolderLoc);
 		for (File f : new File(matchFolderLoc).listFiles()) {
 			AddMatchData(f);
 		}
