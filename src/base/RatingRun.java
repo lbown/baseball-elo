@@ -42,6 +42,7 @@ public class RatingRun {
 		loadPlayersFromAppearances(appearances);
 		method = RatingMethod.EloGammaAdjust;
 	}
+	
 	public RatingRun(RatingMethod rm, List<Match> matches, List<PlateAppearance> appearances) {
 		this();
 		loadPlayersAndOrgs(matches);
@@ -124,8 +125,9 @@ public class RatingRun {
 						num++;
 			}
 			
-			if ((p.pos == PosType.Batter && num > 1) || (p.pos == PosType.Pitcher && num > 6))
+			if ((p.pos == PosType.Batter && num > 1) || (p.pos == PosType.Pitcher && num > 6)) {
 				players.get(p.playerCode).updateElo(t1Update, m.date);
+			}
 		}
 		
 		for(Player p : team2.getPlayers()) {
@@ -136,8 +138,9 @@ public class RatingRun {
 						num++;
 			}
 			
-			if ((p.pos == PosType.Batter && num > 1) || (p.pos == PosType.Pitcher && num > 6))
+			if ((p.pos == PosType.Batter && num > 1) || (p.pos == PosType.Pitcher && num > 6)) {
 				players.get(p.playerCode).updateElo(t2Update, m.date);
+			}
 		}
 	}
 	/**
@@ -206,6 +209,7 @@ public class RatingRun {
 		}
 	}
 	public void processAllAppearances(List<PlateAppearance> appearances, String appearanceScore) {
+		System.out.println(method);
 		for(PlateAppearance pa : appearances) {
 			allDates.add(pa.date);
 			String bcode = pa.batter.playerCode;
@@ -226,9 +230,9 @@ public class RatingRun {
 				int gamma = 121;
 				likelihoodBWins = 1/(1+Math.pow(10, (pitcherElo + gamma - batterElo)/400.0));
 				players.get(bcode).updateBatterElo(
-						k/4 * (pa.valueToBatter(appearanceScore) - likelihoodBWins), pa.date);
+						0 * k/8 * (pa.valueToBatter(appearanceScore) - likelihoodBWins), pa.date);
 				players.get(pcode).updatePitcherElo(
-						k/4 * (likelihoodBWins - pa.valueToBatter(appearanceScore)), pa.date);
+						0 * k/8 * (likelihoodBWins - pa.valueToBatter(appearanceScore)), pa.date);
 				break;
 			default:
 				break;
@@ -333,6 +337,35 @@ public class RatingRun {
 		System.out.print("Pitcher:");
 		for(EloDate e : p.eloPitcher) {
 			System.out.print(" " + e.elo + ",");
+		}
+	}
+	
+	public float predictMatches(List<Match> matches) {
+		float correct = 0;
+		int numTotal = 0;
+		for (Match m : matches) {
+			int outcome = predictMatch(m);
+			if (outcome != -1) {
+				correct += outcome;
+				numTotal += 1;
+			}
+		}
+		System.out.println("correct " + correct + " total " + numTotal);
+		return correct / numTotal;
+	}
+	
+	public int predictMatch(Match m) {
+		double epsilon = 0.00;
+		double diff = m.team2.AverageElo(players) - m.team1.AverageElo(players);
+		double likelihoodT1Wins = 1/(1+Math.pow(10, (diff)/400.0));
+		if (likelihoodT1Wins > 0.5 + epsilon) {
+			if (m.team1Wins) return 1;
+			else return 0;
+		} else if (likelihoodT1Wins < 0.5 - epsilon) {
+			if (m.team1Wins) return 0;
+			else return 1;
+		} else {
+			return -1;
 		}
 	}
 	

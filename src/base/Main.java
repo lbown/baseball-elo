@@ -19,39 +19,47 @@ public class Main {
 		List<PlateAppearance> apps2 = sl2.getAppearances();
 		
 		RatingRun ratings = new RatingRun(apps);
-		RatingRun ratings2 = new RatingRun(apps2);
-//		RatingRun ratings = new RatingRun(RatingMethod.EloBlind, matches);
-//		RatingRun ratings2 = new RatingRun(RatingMethod.EloBlind, matches2);
-//		RatingRun ratings = new RatingRun(RatingMethod.EloCombined, matches, apps);
-//		RatingRun ratings2 = new RatingRun(RatingMethod.EloCombined, matches2, apps2);
+		ratings.processAllAppearances(apps, "Weighted");
+		
+//		RatingRun ratings2 = new RatingRun(RatingMethod.EloBlind, matches);
+//		ratings2.processAllMatches(matches);
+		
+		RatingRun ratings3 = new RatingRun(RatingMethod.EloCombined, matches, apps);
+		ratings3.processAllMatches(matches);
+		
+		
+		System.out.println("Play-by-play accuracy: " + ratings.predictMatches(matches2));
+//		System.out.println("Blind accuracy: " + ratings2.predictMatches(matches2));
+		System.out.println("Combo accuracy: " + ratings3.predictMatches(matches2));
 		
 //		ratings.processAllAppearances(apps, "Weighted");
 //		ratings2.processAllAppearances(apps2, "Weighted");
 //		ratings.processAllMatches(matches);
 //		ratings2.processAllMatches(matches2);
 		
-		ArrayList<Player> diffs = new ArrayList<Player>();
 		
-		for (Player p : ratings2.players.values()) {
-			if (ratings.players.containsKey(p.playerCode)) {
-				Player newP = new Player(p.playerCode, p.playerName, p.pos);
-				System.out.println(p.getElo() + " " + ratings.players.get(p.playerCode).getElo());
-				newP.updateElo(-1500+(p.getElo() - ratings.players.get(p.playerCode).getElo()), "");
-				diffs.add(newP);
-			}
-		}
-		
-		try {
-			FileWriter csvWriter = new FileWriter("Test.csv");
-			csvWriter.append("Name,Position,Diff");
-			for (Player p : diffs) {
-				csvWriter.append("\n" + p.playerName + "," + p.pos + "," + p.getElo());
-			}
-			csvWriter.flush();
-			csvWriter.close();
-		} catch (IOException e) {
-			
-		}
+//		ArrayList<Player> diffs = new ArrayList<Player>();
+//		
+//		for (Player p : ratings3.players.values()) {
+//			if (ratings.players.containsKey(p.playerCode)) {
+//				Player newP = new Player(p.playerCode, p.playerName, p.pos);
+//				System.out.println(p.getElo() + " " + ratings.players.get(p.playerCode).getElo());
+//				newP.updateElo(-1500+(p.getElo() - ratings.players.get(p.playerCode).getElo()), "");
+//				diffs.add(newP);
+//			}
+//		}
+//		
+//		try {
+//			FileWriter csvWriter = new FileWriter("Test.csv");
+//			csvWriter.append("Name,Position,Diff");
+//			for (Player p : diffs) {
+//				csvWriter.append("\n" + p.playerName + "," + p.pos + "," + p.getElo());
+//			}
+//			csvWriter.flush();
+//			csvWriter.close();
+//		} catch (IOException e) {
+//			
+//		}
 		
 //		ratings.printRatings();
 //		ratings.printPositionDiff();

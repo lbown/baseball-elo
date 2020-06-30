@@ -17,10 +17,16 @@ public class Team {
 	 */
 	public double AverageElo(Map<String, Player> players) {
 		double scoreSum = 0;
+		int numPlayers = 0;
 		for(PlayerContrib pc : playerContribs) {
-			scoreSum += players.get(pc.player.playerCode).getElo();
+			if (players.get(pc.player.playerCode) != null) {
+				scoreSum += players.get(pc.player.playerCode).getElo();
+			} else {
+				scoreSum += 1500;
+			}
+			numPlayers++;
 		}
-		return scoreSum/playerContribs.size();
+		return scoreSum/numPlayers;
 	}
 	
 	/**

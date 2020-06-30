@@ -45,7 +45,7 @@ public class Player implements Rated {
 		if (pos == PosType.Batter) {
 			updateBatterElo(eloUpdate, date);
 		} else {
-			updatePitcherElo(eloUpdate, date);			
+			updatePitcherElo(eloUpdate, date);		
 		}
 	}
 	

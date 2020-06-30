@@ -12,7 +12,7 @@ public class StatLoader {
 	public StatLoader(String dataFolderLoc) {
 		String matchFolderLoc = dataFolderLoc + "Matches/";
 		String playbyplayLoc = dataFolderLoc + "Plays/";
-		System.out.println(matchFolderLoc);
+		System.out.println("Loading data from " + matchFolderLoc);
 		for (File f : new File(matchFolderLoc).listFiles()) {
 			AddMatchData(f);
 		}
