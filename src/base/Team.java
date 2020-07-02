@@ -6,10 +6,12 @@ import base.Player.PosType;
 public class Team {
 	String teamCode;
 	ArrayList<PlayerContrib> playerContribs;
+	ArrayList<String> startingPlayerCodes;
 	
 	public Team(String tc) {
 		teamCode = tc;
 		playerContribs = new ArrayList<PlayerContrib>();
+		startingPlayerCodes = new ArrayList<String>();
 	}
 	
 	/**
@@ -27,6 +29,20 @@ public class Team {
 			numPlayers++;
 		}
 		return scoreSum/numPlayers;
+	}
+	
+	public double PredictedElo(Map<String, Player> players) {
+		double scoreSum = 0;
+		int numPlayers = 0;
+		for (String s : startingPlayerCodes) {
+			if (players.get(s) == null) {
+				scoreSum += 1500;
+			} else {
+				scoreSum += players.get(s).getElo();
+			}
+			numPlayers++;
+		}
+		return scoreSum / numPlayers;
 	}
 	
 	/**

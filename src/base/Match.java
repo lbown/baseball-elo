@@ -18,6 +18,7 @@ public class Match {
 	boolean team1Wins;
 	boolean isCorrupt;
 	String date;
+	Date dateObj;
 	List<PlateAppearance> appearances;
 	
 	public Match(String line) {
@@ -33,6 +34,10 @@ public class Match {
 		
 		id =  data[6] + data[0] + data[1];
 		date = data[0];
+
+		dateObj = new Date(Integer.parseInt(date.substring(0,4)),
+				   Integer.parseInt(date.substring(4,6)),
+				   Integer.parseInt(date.substring(6)));
 		// Starting Pitchers
 		if(data[101].length() != 8 || data[103].length() != 8) {
 			isCorrupt = true;
@@ -44,6 +49,8 @@ public class Match {
 		team1.playerContribs.add(team1.new PlayerContrib(new Player(data[101], data[102], PosType.Pitcher), 1));
 		team2.playerContribs.add(team2.new PlayerContrib(new Player(data[103], data[104], PosType.Pitcher), 1));
 		
+		team1.startingPlayerCodes.add(data[101]);
+		team2.startingPlayerCodes.add(data[103]);
 		// Visitor Batters
 		for (int i = 105; i < 132; i+=3) {
 			if(data[i].length() != 8) {
@@ -53,6 +60,7 @@ public class Match {
 				return;
 			} else {
 				team1.playerContribs.add(team1.new PlayerContrib(new Player(data[i], data[i+1], PosType.Batter), 1));
+				team1.startingPlayerCodes.add(data[i]);
 			}
 		}
 		
@@ -65,6 +73,7 @@ public class Match {
 				return;
 			} else {
 				team2.playerContribs.add(team2.new PlayerContrib(new Player(data[i], data[i+1], PosType.Batter), 1));
+				team2.startingPlayerCodes.add(data[i]);
 			}
 		}
 	}

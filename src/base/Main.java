@@ -21,15 +21,15 @@ public class Main {
 		RatingRun ratings = new RatingRun(apps);
 		ratings.processAllAppearances(apps, "Weighted");
 		
-//		RatingRun ratings2 = new RatingRun(RatingMethod.EloBlind, matches);
-//		ratings2.processAllMatches(matches);
+		RatingRun ratings2 = new RatingRun(RatingMethod.EloBlind, matches);
+		ratings2.processAllMatches(matches);
 		
 		RatingRun ratings3 = new RatingRun(RatingMethod.EloCombined, matches, apps);
 		ratings3.processAllMatches(matches);
-		
+		ratings.printRatings();
 		
 		System.out.println("Play-by-play accuracy: " + ratings.predictMatches(matches2));
-//		System.out.println("Blind accuracy: " + ratings2.predictMatches(matches2));
+		System.out.println("Blind accuracy: " + ratings2.predictMatches(matches2));
 		System.out.println("Combo accuracy: " + ratings3.predictMatches(matches2));
 		
 //		ratings.processAllAppearances(apps, "Weighted");
