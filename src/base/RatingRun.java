@@ -14,7 +14,7 @@ public class RatingRun {
 	private RatingMethod method;
 	Map<String, Player> players = new HashMap<String, Player>();
 	Map<String, Organization> organizations = new HashMap<String, Organization>();
-	List<Date> allDates = new ArrayList<Date>();
+	List<String> allDates = new ArrayList<String>();
 	double k;
 	int step;
 	File gameFile;
@@ -56,7 +56,7 @@ public class RatingRun {
 	 */
 	public void Step(Match m) {
 		if(m.isCorrupt) return;
-		allDates.add(m.dateObj);
+		if(!allDates.contains(m.date)) allDates.add(m.date);
 		step++;
 		switch(method) {
 			case EloBlind:
@@ -178,7 +178,7 @@ public class RatingRun {
 					}
 					for(Player p : t.getPlayers()) {
 						if (!players.containsKey(p.playerCode)) {
-							players.put(p.playerCode, new Player(p));
+							players.put(p.playerCode, p);
 							organizations.get(t.teamCode).playerCodes.add(p.playerCode);
 						}
 						
@@ -198,8 +198,8 @@ public class RatingRun {
 			if (p.batter == null) System.out.println("batter null");
 			if (p.pitcher == null) System.out.println("pitcher null");
 			
-			players.put(p.batter.playerCode, new Player(p.batter));
-			players.put(p.pitcher.playerCode, new Player(p.pitcher));
+			players.put(p.batter.playerCode, p.batter);
+			players.put(p.pitcher.playerCode, p.pitcher);
 		}
 	}
 	
@@ -209,8 +209,9 @@ public class RatingRun {
 		}
 	}
 	public void processAllAppearances(List<PlateAppearance> appearances, String appearanceScore) {
+		System.out.println(method);
 		for(PlateAppearance pa : appearances) {
-			allDates.add(pa.dateObj);
+			if(!allDates.contains(pa.date)) allDates.add(pa.date);
 			String bcode = pa.batter.playerCode;
 			String pcode = pa.pitcher.playerCode;
 			double batterElo = players.get(bcode).batterElo();
@@ -355,7 +356,7 @@ public class RatingRun {
 	
 	public int predictMatch(Match m) {
 		double epsilon = 0.00;
-		double diff = m.team2.PredictedElo(players) - m.team1.PredictedElo(players);
+		double diff = m.team2.AverageElo(players) - m.team1.AverageElo(players);
 		double likelihoodT1Wins = 1/(1+Math.pow(10, (diff)/400.0));
 		if (likelihoodT1Wins > 0.5 + epsilon) {
 			if (m.team1Wins) return 1;
@@ -372,16 +373,15 @@ public class RatingRun {
 		try {
 			FileWriter csvWriter = new FileWriter(file);
 			csvWriter.append("Player,Position");
-			allDates.sort((d1, d2) -> d1.compareTo(d2));
 			for (int i = 1; i < allDates.size(); i++) {
 				if (allDates.get(i).equals(allDates.get(i-1))) {
 					allDates.remove(i);
 					i--;
 				}
 			}
-			for (Date d : allDates){
+			for (String s : allDates){
 				// To yyyy-mm-dd
-				String formDate = d.getYear() + "-" + d.getMonth() + "-" + d.getDate();
+				String formDate = s.substring(0,4) + "-" + s.substring(4,6) + "-" + s.substring(6);
 				csvWriter.append("," + formDate);
 			}
 			for (Player p : players.values()) {
@@ -392,7 +392,7 @@ public class RatingRun {
 						double elo = 1500;
 						for (int i = 0; i < allDates.size(); i++) {
 							for (Rated.EloDate ed : p.eloBatter) {
-								if (ed.date.equals(fmtDate(allDates.get(i)))) {
+								if (ed.date.equals(allDates.get(i))) {
 									elo = ed.elo;
 								}
 							}
@@ -415,9 +415,6 @@ public class RatingRun {
 			csvWriter.close();
 		} catch (IOException e) {
 		}
-	}
-	private String fmtDate(Date d) {
-		return d.getYear()+ "" + d.getMonth() + d.getDate();
 	}
 	
 }

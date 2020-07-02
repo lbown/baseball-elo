@@ -12,13 +12,13 @@ public class Main {
 		List<Match> matches = sl.getMatches();
 		List<PlateAppearance> appearances = sl.getAppearances();
 		
-		
-		RatingRun ratings = new RatingRun(RatingMethod.EloBlind, matches, appearances);
-		ratings.processAllMatches(matches);
+		RatingRun ratings = new RatingRun(appearances);
+		ratings.processAllAppearances(appearances, "Weighted");
 		
 		ratings.printRatings();
+
 //		ratings.printPositionDiff();
 //		ratings.printPlayerRatings("zobrb001");
-		ratings.playerGameEloDateToCSV("2010Blind.csv", 1);
+		ratings.playerGameEloDateToCSV("2010Plays.csv", 1);
 	}
 }
