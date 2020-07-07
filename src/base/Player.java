@@ -15,6 +15,12 @@ public class Player implements Rated {
 		pos = ptype;
 		initializeRating();
 	}
+	Player(Player p) {
+		playerCode = p.playerCode;
+		playerName = p.playerName;
+		pos = p.pos;
+		initializeRating();
+	}
 	@Override
 	public double getElo() {
 		if (pos == PosType.Batter) {

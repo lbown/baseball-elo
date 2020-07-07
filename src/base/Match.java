@@ -42,7 +42,9 @@ public class Match {
 		}
 		
 		team1.playerContribs.add(team1.new PlayerContrib(new Player(data[101], data[102], PosType.Pitcher), 1));
+		team1.startingPlayerCodes.add(data[101]);
 		team2.playerContribs.add(team2.new PlayerContrib(new Player(data[103], data[104], PosType.Pitcher), 1));
+		team2.startingPlayerCodes.add(data[103]);
 		
 		// Visitor Batters
 		for (int i = 105; i < 132; i+=3) {
@@ -53,6 +55,7 @@ public class Match {
 				return;
 			} else {
 				team1.playerContribs.add(team1.new PlayerContrib(new Player(data[i], data[i+1], PosType.Batter), 1));
+				team1.startingPlayerCodes.add(data[i]);
 			}
 		}
 		
@@ -65,6 +68,7 @@ public class Match {
 				return;
 			} else {
 				team2.playerContribs.add(team2.new PlayerContrib(new Player(data[i], data[i+1], PosType.Batter), 1));
+				team2.startingPlayerCodes.add(data[i]);
 			}
 		}
 	}

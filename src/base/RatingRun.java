@@ -125,8 +125,12 @@ public class RatingRun {
 						num++;
 			}
 			
-			if ((p.pos == PosType.Batter && num > 1) || (p.pos == PosType.Pitcher && num > 6)) {
-				players.get(p.playerCode).updateElo(t1Update, m.date);
+			if ((p.pos == PosType.Batter && num > 0) || (p.pos == PosType.Pitcher && num > 0)) {
+				if (p.pos == PosType.Batter) {
+					players.get(p.playerCode).updateBatterElo(t1Update, m.date);
+				} else {
+					players.get(p.playerCode).updatePitcherElo(t1Update, m.date);
+				}
 			}
 		}
 		
@@ -138,8 +142,12 @@ public class RatingRun {
 						num++;
 			}
 			
-			if ((p.pos == PosType.Batter && num > 1) || (p.pos == PosType.Pitcher && num > 6)) {
-				players.get(p.playerCode).updateElo(t2Update, m.date);
+			if ((p.pos == PosType.Batter && num > 0) || (p.pos == PosType.Pitcher && num > 0)) {
+				if (p.pos == PosType.Batter) {
+					players.get(p.playerCode).updateBatterElo(t2Update, m.date);
+				} else {
+					players.get(p.playerCode).updatePitcherElo(t2Update, m.date);
+				}
 			}
 		}
 	}
@@ -178,7 +186,7 @@ public class RatingRun {
 					}
 					for(Player p : t.getPlayers()) {
 						if (!players.containsKey(p.playerCode)) {
-							players.put(p.playerCode, p);
+							players.put(p.playerCode, new Player(p));
 							organizations.get(t.teamCode).playerCodes.add(p.playerCode);
 						}
 						
@@ -198,8 +206,8 @@ public class RatingRun {
 			if (p.batter == null) System.out.println("batter null");
 			if (p.pitcher == null) System.out.println("pitcher null");
 			
-			players.put(p.batter.playerCode, p.batter);
-			players.put(p.pitcher.playerCode, p.pitcher);
+			players.put(p.batter.playerCode, new Player(p.batter));
+			players.put(p.pitcher.playerCode, new Player(p.pitcher));
 		}
 	}
 	
@@ -209,7 +217,6 @@ public class RatingRun {
 		}
 	}
 	public void processAllAppearances(List<PlateAppearance> appearances, String appearanceScore) {
-		System.out.println(method);
 		for(PlateAppearance pa : appearances) {
 			if(!allDates.contains(pa.date)) allDates.add(pa.date);
 			String bcode = pa.batter.playerCode;
@@ -230,9 +237,9 @@ public class RatingRun {
 				int gamma = 121;
 				likelihoodBWins = 1/(1+Math.pow(10, (pitcherElo + gamma - batterElo)/400.0));
 				players.get(bcode).updateBatterElo(
-						k/4 * (pa.valueToBatter(appearanceScore) - likelihoodBWins), pa.date);
+						k/2 * (pa.valueToBatter(appearanceScore) - likelihoodBWins), pa.date);
 				players.get(pcode).updatePitcherElo(
-						k/4 * (likelihoodBWins - pa.valueToBatter(appearanceScore)), pa.date);
+						k/2 * (likelihoodBWins - pa.valueToBatter(appearanceScore)), pa.date);
 				break;
 			default:
 				break;
@@ -268,6 +275,7 @@ public class RatingRun {
 		Map<String, Integer> hm = new TreeMap<String, Integer>();
 		for (String s : players.keySet()) {
 			Player p = players.get(s);
+			if (p.pos == PosType.Batter)
 			hm.put(p.playerName + " - " + p.pos.toString() + ": " + (p.eloBatter.size() + p.eloPitcher.size()) + " games", (int)Math.floor(players.get(s).getElo()));
 		}
 		List<Map.Entry<String, Integer>> list = new ArrayList<Map.Entry<String, Integer>>(hm.entrySet());
@@ -356,7 +364,7 @@ public class RatingRun {
 	
 	public int predictMatch(Match m) {
 		double epsilon = 0.00;
-		double diff = m.team2.AverageElo(players) - m.team1.AverageElo(players);
+		double diff = m.team2.PredictedElo(players) - m.team1.PredictedElo(players);
 		double likelihoodT1Wins = 1/(1+Math.pow(10, (diff)/400.0));
 		if (likelihoodT1Wins > 0.5 + epsilon) {
 			if (m.team1Wins) return 1;
