@@ -8,20 +8,88 @@ public class Main {
 
 	
 	public static void main(String[] args) {
-		TestPredictions();
+		generateComboRatings();
 	}
-	public static void generateComboRatings() {
+	public static void computeDiff() {
+		StatLoader sl = new StatLoader("GameData/1916/");
+		List<Match> matches = sl.getMatches();
+		List<PlateAppearance> appearances = sl.getAppearances();
+		RatingRun ratings = new RatingRun(RatingMethod.EloGammaAdjust, matches, appearances);
+		ratings.processAllAppearances(appearances, "Weighted");
+		ratings.printPositionDiff();
+	}
+	
+	public static void generateBlindRatings() {
 		StatLoader sl = new StatLoader("GameData/2010/");
 		List<Match> matches = sl.getMatches();
+		List<PlateAppearance> appearances = sl.getAppearances();
+		
+		RatingRun ratings = new RatingRun(RatingMethod.EloBlind, matches, appearances);
+		ratings.processAllMatches(matches);
+		
+		ratings.printRatings();
+		ratings.playerGameEloDateToCSV("2010Blind.csv", 1);
+	}
+	public static void truncBlindRatings() {
+		StatLoader sl = new StatLoader("GameData/2010-2019/");
+		List<Match> truncated = sl.getTruncMatches();
+		List<PlateAppearance> appearances = sl.getAppearances();
+		double numPredicted = 0;
+		double numMatches = 0;
+		
+		RatingRun ratings = new RatingRun(RatingMethod.EloBlindTrunc, truncated, appearances);
+		ratings.processAllMatches(truncated);
+		
+		for (Match m : truncated) {
+			if (!m.isCorrupt && !m.gameTied) {
+				numMatches++;
+				if (m.predictedBy5th) {
+					numPredicted++;
+				}
+			}
+		}
+		
+		ratings.printRatings();
+		System.out.println("Fraction predicted by 5th inning score: " + numPredicted/numMatches);
+		ratings.playerGameEloDateToCSV("2010-2019Trunc.csv", 1);
+	}
+	public static void generatePBPTruncRatings() {
+		
+	}
+	
+	public static void generateComboRatings() {
+		StatLoader sl = new StatLoader("GameData/2010-2019/");
+		List<Match> matches = sl.getTruncMatches();
 		List<PlateAppearance> appearances = sl.getAppearances();
 		
 		RatingRun ratings = new RatingRun(RatingMethod.EloCombined, matches, appearances);
 		ratings.processAllMatches(matches);
 		
 		ratings.printRatings();
-		ratings.playerGameEloDateToCSV("2010Combo.csv", 1);
+		ratings.playerGameEloDateToCSV("2000sCombo.csv", 1);
 	}
-
+	public static void generatePlateAppRatings() {
+		StatLoader sl = new StatLoader("GameData/2010/");
+		List<Match> matches = sl.getMatches();
+		List<PlateAppearance> appearances = sl.getAppearances();
+		
+		RatingRun ratings = new RatingRun(RatingMethod.EloPlateAppearance, matches, appearances);
+		ratings.processAllMatches(matches);
+		
+		ratings.printRatings();
+		ratings.playerGameEloDateToCSV("2010PlayByPlayNoGamma.csv", 1);
+	}
+	public static void FindMaxInning() {
+		int[] counts = new int[10];
+		StatLoader sl = new StatLoader("GameData/2000-2018/");
+		List<Match> matches = sl.getMatches();
+		for (Match m : matches) {
+			counts[m.firstSub]++;
+		}
+		for (int i : counts) {
+			System.out.println(i);
+		}
+	}
 	public static void TestPredictions() {
 		StatLoader sl1 = new StatLoader("GameData/2000-2018/");
 		StatLoader sl2 = new StatLoader("GameData/2019/");
@@ -30,30 +98,46 @@ public class Main {
 		List<PlateAppearance> appearances1 = sl1.getAppearances();
 		List<PlateAppearance> appearances2 = sl2.getAppearances();
 		
-		RatingRun ratings1 = new RatingRun(RatingMethod.EloCombined, matches1, appearances1);
+		List<Match> both = new ArrayList<Match>(matches1);
+		both.addAll(matches2);
+		
+		RatingRun ratings1 = new RatingRun(RatingMethod.EloCombined, both, appearances1);
 		ratings1.processAllMatches(matches1);
 		//0.5727835
 		
-		RatingRun ratings2 = new RatingRun(RatingMethod.EloBlind, matches1);
+		RatingRun ratings2 = new RatingRun(RatingMethod.EloBlind, both);
 		ratings2.processAllMatches(matches1);
 		//0.5661856
 
-		RatingRun ratings3 = new RatingRun(appearances1);
+		RatingRun ratings3 = new RatingRun(RatingMethod.EloGammaAdjust, both);
 		ratings3.processAllAppearances(appearances1, "Weighted");
 		//0.5727835
 		
-		RatingRun ratings4 = new RatingRun(appearances1);
-		ratings4.processAllAppearances(appearances1, "TTO");
-		//0.5538144
-		
-		RatingRun ratings5 = new RatingRun(appearances1);
-		ratings5.processAllAppearances(appearances1, "BIP");
-		//0.5764949
 		
 		System.out.println(ratings1.predictMatches(matches2));
 		System.out.println(ratings2.predictMatches(matches2));
 		System.out.println(ratings3.predictMatches(matches2));
-		System.out.println(ratings4.predictMatches(matches2));
-		System.out.println(ratings5.predictMatches(matches2));
+	}
+	public static void TestTruncPredictions() {
+		StatLoader sl1 = new StatLoader("GameData/2000-2018/");
+		StatLoader sl2 = new StatLoader("GameData/2019/");
+		List<Match> train = sl1.getTruncMatches();
+		List<Match> test = sl2.getTruncMatches();
+		
+		List<Match> both = new ArrayList<Match>(train);
+		both.addAll(test);
+		RatingRun ratings = new RatingRun(RatingMethod.EloBlindTrunc, both);
+		ratings.processAllMatches(train);
+		
+		System.out.println(ratings.predictMatches(test));
+	}
+	public static void HomeFieldPctWon() {
+		StatLoader sl = new StatLoader("GameData/2000-2018/");
+		List<Match> ms = sl.getMatches();
+		int visWins = 0;
+		for(Match m : ms) {
+			if (m.team1Wins) visWins++;
+		}
+		System.out.println((double)visWins/ms.size());
 	}
 }

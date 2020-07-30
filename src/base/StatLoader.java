@@ -8,6 +8,7 @@ import java.util.*;
 public class StatLoader {
 	private Map<String, Match> matches = new HashMap<String, Match>();
 	List<PlateAppearance> appearances = new ArrayList<PlateAppearance>();
+	private Map<String, Match> truncMatches = new HashMap<String, Match>();
 	
 	public StatLoader(String dataFolderLoc) {
 		String matchFolderLoc = dataFolderLoc + "Matches/";
@@ -33,7 +34,8 @@ public class StatLoader {
 			String line = sc.nextLine();
 			
 			Match m = new Match(line);
-			matches.put(m.id, m);
+			matches.put(m.id, new Match(m));
+			truncMatches.put(m.id, new Match(m));
 		}
 		sc.close();
 	}
@@ -59,6 +61,8 @@ public class StatLoader {
 			if (line.substring(0, 2).equals("id") && matchUpdate.size() > 0) {
 				pushUpdate(matchUpdate);
 				matchUpdate = new ArrayList<String>();
+			} else if (line.substring(0, 2).equals("id") && matchUpdate.size() < 10) {
+				matchUpdate = new ArrayList<String>();
 			}
 			matchUpdate.add(line);
 		}
@@ -66,12 +70,14 @@ public class StatLoader {
 	}
 	
 	private void pushUpdate(List<String> matchUpdate) {
+		if (matchUpdate.size() < 10) return;
 		String id = matchUpdate.get(0).substring(3);
 		if(matches.get(id).isCorrupt) return;		
 		if (matches.containsKey(id) == false) {
 			System.out.println("Can't find match " + id + ".");
 		}
 		matches.get(id).UpdateWithPlays(matchUpdate);
+		truncMatches.get(id).TruncateWithPlays(matchUpdate);
 		appearances.addAll(matches.get(id).appearances);
 	}
 	
@@ -79,6 +85,18 @@ public class StatLoader {
 		// Sort by date
 		ArrayList<Map.Entry<String, Match>> entries =
 				new ArrayList<Map.Entry<String, Match>>(matches.entrySet());
+		entries.sort((e1,e2) -> compareEntries(e1, e2));
+		ArrayList<Match> ret = new ArrayList<Match>();
+		for (Map.Entry<String, Match> e : entries) {
+			ret.add(e.getValue());
+		}
+		return ret;
+	}
+	
+	public List<Match> getTruncMatches() {
+		// Sort by date
+		ArrayList<Map.Entry<String, Match>> entries =
+				new ArrayList<Map.Entry<String, Match>>(truncMatches.entrySet());
 		entries.sort((e1,e2) -> compareEntries(e1, e2));
 		ArrayList<Match> ret = new ArrayList<Match>();
 		for (Map.Entry<String, Match> e : entries) {

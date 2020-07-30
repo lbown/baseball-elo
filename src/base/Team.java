@@ -12,6 +12,11 @@ public class Team {
 		teamCode = tc;
 		playerContribs = new ArrayList<PlayerContrib>();
 	}
+	public Team(Team t) {
+		teamCode = t.teamCode;
+		playerContribs = new ArrayList<Team.PlayerContrib>(t.playerContribs);
+		startingPlayerCodes = new ArrayList<String>(t.startingPlayerCodes);
+	}
 	
 	/**
 	 * @return The average Elo of everyone on their team
@@ -21,7 +26,10 @@ public class Team {
 		int numPlayers = 0;
 		for(PlayerContrib pc : playerContribs) {
 			if (players.get(pc.player.playerCode) != null) {
-				scoreSum += players.get(pc.player.playerCode).getElo();
+				if(pc.player.pos == PosType.Batter)
+					scoreSum += players.get(pc.player.playerCode).batterElo();
+				else
+					scoreSum += players.get(pc.player.playerCode).pitcherElo();
 			} else {
 				scoreSum += 1500;
 			}
@@ -64,14 +72,14 @@ public class Team {
 	/**
 	 * Adds a player to the team with contribution 1
 	 */
-	public void addPlayer(String playerCode, String playerName, Player.PosType ptype) {
-		addPlayer(playerCode, playerName, ptype, 1);
+	public void addPlayer(String playerCode, String playerName, Player.PosType ptype, int pos) {
+		addPlayer(playerCode, playerName, ptype, 1, pos);
 	}
 	/**
 	 * Adds a player to the team with specified contribution factor
 	 */
-	public void addPlayer(String playerCode, String playerName, Player.PosType ptype, double contrib) {
-		Player p = new Player(playerCode, playerName, ptype);
+	public void addPlayer(String playerCode, String playerName, Player.PosType ptype, double contrib, int pos) {
+		Player p = new Player(playerCode, playerName, ptype, pos);
 		playerContribs.add(new PlayerContrib(p, contrib));
 	}
 	/**
@@ -81,6 +89,14 @@ public class Team {
 	public List<Player> getPlayers() {
 		List<Player> players = new ArrayList<Player>(playerContribs.size());
 		for(PlayerContrib pc : playerContribs) {
+			players.add(pc.player);
+		}
+		return players;
+	}
+	public List<Player> getBatters() {
+		List<Player> players = new ArrayList<Player>(playerContribs.size());
+		for(PlayerContrib pc : playerContribs) {
+			if(pc.player.pos == PosType.Batter)
 			players.add(pc.player);
 		}
 		return players;

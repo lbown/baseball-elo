@@ -27,13 +27,7 @@ public class RatingRun {
 	 * Uses matches to update ratings. Requires method other than BaseAppearance
 	 */
 	public RatingRun(RatingMethod rm, List<Match> matches) {
-		this();
-		if(rm == RatingMethod.EloPlateAppearance) {
-			System.err.println("Must provide appearances for Plate Appearance routine.");
-			return;
-		} else {
-			loadPlayersAndOrgs(matches);
-		}
+		loadPlayersAndOrgs(matches);
 		method = rm;
 	}
 	
@@ -68,6 +62,15 @@ public class RatingRun {
 			case EloCombined:
 				StepCombined(m);
 				break;
+			case EloBlindTrunc:
+				StepEloBlindTrunc(m);
+				break;
+			case EloGammaAdjust:
+				StepPlayByPlay(m);
+				break;
+			case EloPlateAppearance:
+				processAllAppearances(m.appearances, "Weighted");
+				break;
 			default:
 				return;
 		}
@@ -84,8 +87,8 @@ public class RatingRun {
 		
 		double t1Avg = team1.AverageElo(players);
 		double t2Avg = team2.AverageElo(players);
-		double likelihoodT1Wins = 1/(1+Math.pow(10, (t2Avg-t1Avg)/400.0));
-		double likelihoodT2Wins = 1/(1+Math.pow(10, (t1Avg-t2Avg)/400.0));
+		double likelihoodT1Wins = 1/(1+Math.pow(10, (t2Avg - t1Avg)/400.0));
+		double likelihoodT2Wins = 1/(1+Math.pow(10, (t1Avg - t2Avg)/400.0));
 		double t1Update = k * ((t1Won ? 1 : 0) - likelihoodT1Wins);
 		double t2Update = k * ((t1Won ? 0 : 1) - likelihoodT2Wins);
 		
@@ -94,9 +97,35 @@ public class RatingRun {
 		}
 		
 		for(Player p : team2.getPlayers()) {
-
 			players.get(p.playerCode).updateElo(t2Update, m.date);
 		}
+	}
+	private void StepEloBlindTrunc(Match m) {
+		Team team1 = m.team1;
+		Team team2 = m.team2;
+		boolean t1Won = m.team1Wins;
+		
+		double t1Avg = team1.AverageElo(players);
+		double t2Avg = team2.AverageElo(players);
+		double likelihoodT1Wins = 1/(1+Math.pow(10, (t2Avg + 27.85 - t1Avg)/400.0));
+		double likelihoodT2Wins = 1/(1+Math.pow(10, (t1Avg - t2Avg - 27.85)/400.0));
+
+		double t1Update = k * ((t1Won ? 1 : 0) - likelihoodT1Wins);
+		double t2Update = k * ((t1Won ? 0 : 1) - likelihoodT2Wins);
+		if (m.gameTied) {
+			t1Update = k * (0.5 - likelihoodT1Wins);
+			t2Update = k * (0.5 - likelihoodT2Wins);
+		}
+		
+		for(Player p : team1.getBatters()) {
+			players.get(p.playerCode).updateBatterElo(t1Update, m.date);
+		}
+		
+		for(Player p : team2.getBatters()) {
+			players.get(p.playerCode).updateBatterElo(t2Update, m.date);
+		}
+		players.get(team1.getStartPitcher().playerCode).updatePitcherElo(t1Update, m.date);
+		players.get(team2.getStartPitcher().playerCode).updatePitcherElo(t2Update, m.date);
 	}
 	/**
 	 * Updates players' ratings based on the likelihood the team will win scaled by
@@ -125,12 +154,13 @@ public class RatingRun {
 						num++;
 			}
 			
-			if ((p.pos == PosType.Batter && num > 0) || (p.pos == PosType.Pitcher && num > 0)) {
+			if ((p.pos == PosType.Batter && num > 0) || (p.pos == PosType.Pitcher && num > 5)) {
 				if (p.pos == PosType.Batter) {
 					players.get(p.playerCode).updateBatterElo(t1Update, m.date);
 				} else {
 					players.get(p.playerCode).updatePitcherElo(t1Update, m.date);
 				}
+				players.get(p.playerCode).rolesPlayed.add(p.rolesPlayed.get(0));
 			}
 		}
 		
@@ -142,14 +172,19 @@ public class RatingRun {
 						num++;
 			}
 			
-			if ((p.pos == PosType.Batter && num > 0) || (p.pos == PosType.Pitcher && num > 0)) {
+			if ((p.pos == PosType.Batter && num > 0) || (p.pos == PosType.Pitcher && num > 5)) {
 				if (p.pos == PosType.Batter) {
 					players.get(p.playerCode).updateBatterElo(t2Update, m.date);
 				} else {
 					players.get(p.playerCode).updatePitcherElo(t2Update, m.date);
 				}
+				players.get(p.playerCode).rolesPlayed.add(p.rolesPlayed.get(0));
 			}
 		}
+	}
+	
+	private void StepPlayByPlay(Match m) {
+		processAllAppearances(m.appearances, "Weighted");
 	}
 	/**
 	 * Treats each baseball team as it's own rated object and updates the team's rating using the
@@ -234,7 +269,7 @@ public class RatingRun {
 				break;
 			case EloCombined:
 			case EloGammaAdjust:
-				int gamma = 121;
+				double gamma = 91.6501536071562+22.231068268635227+5.482450669464242+1.3587263777919816;
 				likelihoodBWins = 1/(1+Math.pow(10, (pitcherElo + gamma - batterElo)/400.0));
 				players.get(bcode).updateBatterElo(
 						k/2 * (pa.valueToBatter(appearanceScore) - likelihoodBWins), pa.date);
@@ -275,8 +310,7 @@ public class RatingRun {
 		Map<String, Integer> hm = new TreeMap<String, Integer>();
 		for (String s : players.keySet()) {
 			Player p = players.get(s);
-			if (p.pos == PosType.Batter)
-			hm.put(p.playerName + " - " + p.pos.toString() + ": " + (p.eloBatter.size() + p.eloPitcher.size()) + " games", (int)Math.floor(players.get(s).getElo()));
+			hm.put(p.playerName + " - " + p.mostCommonRole() + ": " + (p.eloBatter.size() + p.eloPitcher.size()) + " games", (int)Math.floor(players.get(s).getElo()));
 		}
 		List<Map.Entry<String, Integer>> list = new ArrayList<Map.Entry<String, Integer>>(hm.entrySet());
 		list.sort((p1, p2) -> (Integer.compare(p1.getValue(), p2.getValue())));
@@ -363,9 +397,12 @@ public class RatingRun {
 	}
 	
 	public int predictMatch(Match m) {
-		double epsilon = 0.00;
+		double epsilon = 0.03;
 		double diff = m.team2.PredictedElo(players) - m.team1.PredictedElo(players);
 		double likelihoodT1Wins = 1/(1+Math.pow(10, (diff)/400.0));
+		Step(m);
+		
+		if (m.gameTied) return 1;
 		if (likelihoodT1Wins > 0.5 + epsilon) {
 			if (m.team1Wins) return 1;
 			else return 0;
@@ -380,7 +417,7 @@ public class RatingRun {
 	public void playerGameEloDateToCSV(String file, int minGames) {
 		try {
 			FileWriter csvWriter = new FileWriter(file);
-			csvWriter.append("Player,Position");
+			csvWriter.append("Player,Position,FieldPos,%Played");
 			for (int i = 1; i < allDates.size(); i++) {
 				if (allDates.get(i).equals(allDates.get(i-1))) {
 					allDates.remove(i);
@@ -395,7 +432,7 @@ public class RatingRun {
 			for (Player p : players.values()) {
 				if (p.eloBatter.size() + p.eloPitcher.size() >= minGames) {
 					csvWriter.append("\n");
-					csvWriter.append(p.playerName + "," + p.pos);
+					csvWriter.append(p.playerName + "," + p.pos + "," + p.mostCommonRole() + "," + p.rolePct());
 					if(p.pos == PosType.Batter) {
 						double elo = 1500;
 						for (int i = 0; i < allDates.size(); i++) {
@@ -429,6 +466,7 @@ public class RatingRun {
 
 enum RatingMethod {
 	EloBlind,
+	EloBlindTrunc,
 	EloOrg,
 	EloCarry,
 	EloCombined,
