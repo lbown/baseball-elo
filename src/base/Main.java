@@ -51,7 +51,7 @@ public class Main {
 		
 		ratings.printRatings();
 		System.out.println("Fraction predicted by 5th inning score: " + numPredicted/numMatches);
-		ratings.playerGameEloDateToCSV("2010-2019Trunc.csv", 1);
+		ratings.playerGameEloDateToCSV("2010sTrunc.csv", 1);
 	}
 	public static void generatePBPTruncRatings() {
 		
@@ -66,18 +66,18 @@ public class Main {
 		ratings.processAllMatches(matches);
 		
 		ratings.printRatings();
-		ratings.playerGameEloDateToCSV("2000sCombo.csv", 1);
+		ratings.playerGameEloDateToCSV("2010sCombo.csv", 1);
 	}
 	public static void generatePlateAppRatings() {
-		StatLoader sl = new StatLoader("GameData/2010/");
+		StatLoader sl = new StatLoader("GameData/2010-2019/");
 		List<Match> matches = sl.getMatches();
 		List<PlateAppearance> appearances = sl.getAppearances();
 		
-		RatingRun ratings = new RatingRun(RatingMethod.EloPlateAppearance, matches, appearances);
+		RatingRun ratings = new RatingRun(RatingMethod.EloGammaAdjust, matches, appearances);
 		ratings.processAllMatches(matches);
 		
 		ratings.printRatings();
-		ratings.playerGameEloDateToCSV("2010PlayByPlayNoGamma.csv", 1);
+		ratings.playerGameEloDateToCSV("2010sPlayByPlay.csv", 1);
 	}
 	public static void FindMaxInning() {
 		int[] counts = new int[10];

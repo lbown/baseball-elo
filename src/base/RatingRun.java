@@ -147,40 +147,23 @@ public class RatingRun {
 		processAllAppearances(m.appearances, "Weighted");
 		
 		for(Player p : team1.getPlayers()) {
-			int num = 0;
-			for(PlateAppearance pa : m.appearances) {
-				if(pa.batter.playerCode == p.playerCode ||
-				   pa.pitcher.playerCode == p.playerCode)
-						num++;
+			if (p.pos == PosType.Batter) {
+				players.get(p.playerCode).updateBatterElo(t1Update, m.date);
+			} else {
+				players.get(p.playerCode).updatePitcherElo(t1Update, m.date);
 			}
-			
-			if ((p.pos == PosType.Batter && num > 0) || (p.pos == PosType.Pitcher && num > 5)) {
-				if (p.pos == PosType.Batter) {
-					players.get(p.playerCode).updateBatterElo(t1Update, m.date);
-				} else {
-					players.get(p.playerCode).updatePitcherElo(t1Update, m.date);
-				}
-				players.get(p.playerCode).rolesPlayed.add(p.rolesPlayed.get(0));
-			}
+			players.get(p.playerCode).rolesPlayed.add(p.rolesPlayed.get(0));
 		}
 		
 		for(Player p : team2.getPlayers()) {
-			int num = 0;
-			for(PlateAppearance pa : m.appearances) {
-				if(pa.batter.playerCode == p.playerCode ||
-				   pa.pitcher.playerCode == p.playerCode)
-						num++;
+			if (p.pos == PosType.Batter) {
+				players.get(p.playerCode).updateBatterElo(t2Update, m.date);
+			} else {
+				players.get(p.playerCode).updatePitcherElo(t2Update, m.date);
 			}
-			
-			if ((p.pos == PosType.Batter && num > 0) || (p.pos == PosType.Pitcher && num > 5)) {
-				if (p.pos == PosType.Batter) {
-					players.get(p.playerCode).updateBatterElo(t2Update, m.date);
-				} else {
-					players.get(p.playerCode).updatePitcherElo(t2Update, m.date);
-				}
-				players.get(p.playerCode).rolesPlayed.add(p.rolesPlayed.get(0));
-			}
+			players.get(p.playerCode).rolesPlayed.add(p.rolesPlayed.get(0));
 		}
+		
 	}
 	
 	private void StepPlayByPlay(Match m) {
@@ -269,7 +252,7 @@ public class RatingRun {
 				break;
 			case EloCombined:
 			case EloGammaAdjust:
-				double gamma = 91.6501536071562+22.231068268635227+5.482450669464242+1.3587263777919816;
+				double gamma = 126;
 				likelihoodBWins = 1/(1+Math.pow(10, (pitcherElo + gamma - batterElo)/400.0));
 				players.get(bcode).updateBatterElo(
 						k/2 * (pa.valueToBatter(appearanceScore) - likelihoodBWins), pa.date);

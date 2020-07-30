@@ -104,6 +104,7 @@ public class Match {
 				((line[0].equals("com") && line[1].equals("\"ej") && line[3].equals("P") )))
 			) {
 				isCorrupt = true;
+				return 1;
 			}
 			if (line[0].equals("play") 
 					&& !line[line.length-1].endsWith("NP")
@@ -156,15 +157,17 @@ public class Match {
 			if(line[0].equals("play")) {
 				inning = Integer.parseInt(line[1]);
 			}
-			
-			if (inning <= cutoff && line[0].equals("play") && (line[6].startsWith("HR"))) {
+			if(inning > cutoff) {
+				break;
+			}
+			if (line[0].equals("play") && (line[6].startsWith("HR"))) {
 				if(line[2].equals("0")) {
 					visScore++;
 				} else {
 					homeScore++;
 				}
 			}
-			if (inning <= cutoff && line[0].equals("play") && line[6].length() > 2) {
+			if (line[0].equals("play") && line[6].length() > 2) {
 				if(line[2].equals("0")) {
 					visScore += numOccurrences(line[6], "-H") + numOccurrences(line[6], "SBH");
 				} else {
@@ -172,7 +175,6 @@ public class Match {
 				}
 			}
 		}
-		if (isCorrupt) return -1;
 		gameTied = visScore == homeScore;
 		boolean tmpT1Wins = visScore > homeScore;
 		predictedBy5th = (tmpT1Wins == team1Wins) && !gameTied;
