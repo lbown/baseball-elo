@@ -119,13 +119,18 @@ public class RatingRun {
 		
 		for(Player p : team1.getBatters()) {
 			players.get(p.playerCode).updateBatterElo(t1Update, m.date);
+			players.get(p.playerCode).rolesPlayed.add(p.rolesPlayed.get(0));
 		}
 		
 		for(Player p : team2.getBatters()) {
 			players.get(p.playerCode).updateBatterElo(t2Update, m.date);
+			players.get(p.playerCode).rolesPlayed.add(p.rolesPlayed.get(0));
 		}
 		players.get(team1.getStartPitcher().playerCode).updatePitcherElo(t1Update, m.date);
+		players.get(team1.getStartPitcher().playerCode).rolesPlayed.add(team1.getStartPitcher().rolesPlayed.get(0));
 		players.get(team2.getStartPitcher().playerCode).updatePitcherElo(t2Update, m.date);
+		players.get(team2.getStartPitcher().playerCode).rolesPlayed.add(team2.getStartPitcher().rolesPlayed.get(0));
+		
 	}
 	/**
 	 * Updates players' ratings based on the likelihood the team will win scaled by
@@ -400,7 +405,7 @@ public class RatingRun {
 	public void playerGameEloDateToCSV(String file, int minGames) {
 		try {
 			FileWriter csvWriter = new FileWriter(file);
-			csvWriter.append("Player,Position,FieldPos,%Played");
+			csvWriter.append("Code,Name,NumGames,Position,FieldPos,%Played");
 			for (int i = 1; i < allDates.size(); i++) {
 				if (allDates.get(i).equals(allDates.get(i-1))) {
 					allDates.remove(i);
@@ -415,7 +420,7 @@ public class RatingRun {
 			for (Player p : players.values()) {
 				if (p.eloBatter.size() + p.eloPitcher.size() >= minGames) {
 					csvWriter.append("\n");
-					csvWriter.append(p.playerName + "," + p.pos + "," + p.mostCommonRole() + "," + p.rolePct());
+					csvWriter.append(p.playerCode + "," + p.playerName + "," + (p.eloBatter.size() + p.eloPitcher.size()) + "," + p.pos + "," + p.mostCommonRole() + "," + p.rolePct());
 					if(p.pos == PosType.Batter) {
 						double elo = 1500;
 						for (int i = 0; i < allDates.size(); i++) {

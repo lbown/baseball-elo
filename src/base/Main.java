@@ -8,7 +8,24 @@ public class Main {
 
 	
 	public static void main(String[] args) {
-		generateComboRatings();
+		generatePlateAppRatings();
+	}
+	public static void countWins(String name) {
+		int numWins = 0;
+		int numGames = 0;
+		StatLoader sl = new StatLoader("GameData/2010-2019/");
+		List<Match> matches = sl.getTruncMatches();
+		for (Match m : matches) {
+			if(m.team1.startingPlayerCodes.contains(name)) {
+				numGames++;
+				if(m.team1Wins) numWins++;
+			}
+			if(m.team2.startingPlayerCodes.contains(name)) {
+				numGames++;
+				if(!m.team1Wins) numWins++;
+			}
+		}
+		System.out.println(numGames + " " + numWins);
 	}
 	public static void computeDiff() {
 		StatLoader sl = new StatLoader("GameData/1916/");
@@ -94,29 +111,33 @@ public class Main {
 		StatLoader sl1 = new StatLoader("GameData/2000-2018/");
 		StatLoader sl2 = new StatLoader("GameData/2019/");
 		List<Match> matches1 = sl1.getMatches();
+		List<Match> trunc1 = sl1.getTruncMatches();
 		List<Match> matches2 = sl2.getMatches();
+		
 		List<PlateAppearance> appearances1 = sl1.getAppearances();
 		List<PlateAppearance> appearances2 = sl2.getAppearances();
 		
 		List<Match> both = new ArrayList<Match>(matches1);
 		both.addAll(matches2);
+		List<PlateAppearance> bothApps = new ArrayList<PlateAppearance>(appearances1);
+		bothApps.addAll(appearances2);
 		
-		RatingRun ratings1 = new RatingRun(RatingMethod.EloCombined, both, appearances1);
-		ratings1.processAllMatches(matches1);
+		RatingRun ratings1 = new RatingRun(RatingMethod.EloCombined, both, bothApps);
+		ratings1.processAllMatches(trunc1);
 		//0.5727835
 		
-		RatingRun ratings2 = new RatingRun(RatingMethod.EloBlind, both);
-		ratings2.processAllMatches(matches1);
+		RatingRun ratings2 = new RatingRun(RatingMethod.EloBlindTrunc, both, bothApps);
+		ratings2.processAllMatches(trunc1);
 		//0.5661856
 
-		RatingRun ratings3 = new RatingRun(RatingMethod.EloGammaAdjust, both);
-		ratings3.processAllAppearances(appearances1, "Weighted");
+		RatingRun ratings3 = new RatingRun(RatingMethod.EloGammaAdjust, both, bothApps);
+		ratings3.processAllMatches(trunc1);
 		//0.5727835
 		
 		
-		System.out.println(ratings1.predictMatches(matches2));
-		System.out.println(ratings2.predictMatches(matches2));
-		System.out.println(ratings3.predictMatches(matches2));
+		System.out.println("Combined " + ratings1.predictMatches(matches2));
+		System.out.println("Trunc " + ratings2.predictMatches(matches2));
+		System.out.println("Plays " + ratings3.predictMatches(matches2));
 	}
 	public static void TestTruncPredictions() {
 		StatLoader sl1 = new StatLoader("GameData/2000-2018/");
