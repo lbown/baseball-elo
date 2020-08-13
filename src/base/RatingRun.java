@@ -17,6 +17,7 @@ public class RatingRun {
 	List<String> allDates = new ArrayList<String>();
 	double k;
 	int step;
+	double pitcherRatio = 0;
 	File gameFile;
 	
 	public RatingRun() {
@@ -42,6 +43,14 @@ public class RatingRun {
 		loadPlayersAndOrgs(matches);
 		loadPlayersFromAppearances(appearances);
 		method = rm;
+	}
+	
+	public RatingRun(RatingMethod rm, List<Match> matches, List<PlateAppearance> appearances, double pitcherRatio) {
+		this();
+		loadPlayersAndOrgs(matches);
+		loadPlayersFromAppearances(appearances);
+		method = rm;
+		this.pitcherRatio = pitcherRatio;
 	}
 	
 	/**
@@ -105,8 +114,14 @@ public class RatingRun {
 		Team team2 = m.team2;
 		boolean t1Won = m.team1Wins;
 		
-		double t1Avg = team1.AverageElo(players);
-		double t2Avg = team2.AverageElo(players);
+		double t1Avg, t2Avg;
+		if (pitcherRatio == 0) {
+			t1Avg = team1.AverageElo(players);
+			t2Avg = team2.AverageElo(players);
+		} else {
+			t1Avg = team1.AverageElo(players, pitcherRatio);
+			t2Avg = team2.AverageElo(players, pitcherRatio);
+		}
 		double likelihoodT1Wins = 1/(1+Math.pow(10, (t2Avg + 27.85 - t1Avg)/400.0));
 		double likelihoodT2Wins = 1/(1+Math.pow(10, (t1Avg - t2Avg - 27.85)/400.0));
 
@@ -117,20 +132,41 @@ public class RatingRun {
 			t2Update = k * (0.5 - likelihoodT2Wins);
 		}
 		
-		for(Player p : team1.getBatters()) {
-			players.get(p.playerCode).updateBatterElo(t1Update, m.date);
-			players.get(p.playerCode).rolesPlayed.add(p.rolesPlayed.get(0));
+		double batterRatio = (1-pitcherRatio)/team1.getBatters().size();
+		
+		if (team1.getBatters().size() < 8  || team1.getBatters().size() > 9) {
+			System.err.println("Team has " + team1.getBatters().size() + " batters?");
+			for (Player p : team1.getBatters()) {
+				System.out.println(p.playerCode);
+			}
+			System.exit(1);
 		}
 		
-		for(Player p : team2.getBatters()) {
-			players.get(p.playerCode).updateBatterElo(t2Update, m.date);
-			players.get(p.playerCode).rolesPlayed.add(p.rolesPlayed.get(0));
+		if (true) {
+			for(Player p : team1.getBatters()) {
+				players.get(p.playerCode).updateBatterElo(t1Update, m.date);
+				players.get(p.playerCode).rolesPlayed.add(p.rolesPlayed.get(0));
+			}
+			
+			for(Player p : team2.getBatters()) {
+				players.get(p.playerCode).updateBatterElo(t2Update, m.date);
+				players.get(p.playerCode).rolesPlayed.add(p.rolesPlayed.get(0));
+			}
+		} else {
+			for(Player p : team1.getBatters()) {
+				players.get(p.playerCode).updateBatterElo(t1Update*pitcherRatio/batterRatio, m.date);
+				players.get(p.playerCode).rolesPlayed.add(p.rolesPlayed.get(0));
+			}
+			
+			for(Player p : team2.getBatters()) {
+				players.get(p.playerCode).updateBatterElo(t2Update*pitcherRatio/batterRatio, m.date);
+				players.get(p.playerCode).rolesPlayed.add(p.rolesPlayed.get(0));
+			}
 		}
 		players.get(team1.getStartPitcher().playerCode).updatePitcherElo(t1Update, m.date);
 		players.get(team1.getStartPitcher().playerCode).rolesPlayed.add(team1.getStartPitcher().rolesPlayed.get(0));
 		players.get(team2.getStartPitcher().playerCode).updatePitcherElo(t2Update, m.date);
 		players.get(team2.getStartPitcher().playerCode).rolesPlayed.add(team2.getStartPitcher().rolesPlayed.get(0));
-		
 	}
 	/**
 	 * Updates players' ratings based on the likelihood the team will win scaled by
@@ -144,8 +180,8 @@ public class RatingRun {
 		
 		double t1Avg = team1.AverageElo(players);
 		double t2Avg = team2.AverageElo(players);
-		double likelihoodT1Wins = 1/(1+Math.pow(10, (t2Avg-t1Avg)/400.0));
-		double likelihoodT2Wins = 1/(1+Math.pow(10, (t1Avg-t2Avg)/400.0));
+		double likelihoodT1Wins = 1/(1+Math.pow(10, (t2Avg + 27.85 - t1Avg)/400.0));
+		double likelihoodT2Wins = 1/(1+Math.pow(10, (t1Avg - t2Avg - 27.85)/400.0));
 		double t1Update = k * ((t1Won ? 1 : 0) - likelihoodT1Wins);
 		double t2Update = k * ((t1Won ? 0 : 1) - likelihoodT2Wins);
 		
@@ -257,7 +293,7 @@ public class RatingRun {
 				break;
 			case EloCombined:
 			case EloGammaAdjust:
-				double gamma = 126;
+				double gamma = 128.7;
 				likelihoodBWins = 1/(1+Math.pow(10, (pitcherElo + gamma - batterElo)/400.0));
 				players.get(bcode).updateBatterElo(
 						k/2 * (pa.valueToBatter(appearanceScore) - likelihoodBWins), pa.date);
@@ -374,23 +410,42 @@ public class RatingRun {
 		float correct = 0;
 		int numTotal = 0;
 		for (Match m : matches) {
-			int outcome = predictMatch(m);
-			if (outcome != -1) {
-				correct += outcome;
-				numTotal += 1;
+			if (!m.isCorrupt) {
+				int outcome = predictMatch(m);
+				if (outcome != -1) {
+					correct += outcome;
+					numTotal += 1;
+				}
 			}
 		}
 		System.out.println("correct " + correct + " total " + numTotal);
 		return correct / numTotal;
 	}
 	
+	public void matchPredictionCSV(List<Match> matches, String file) {
+		try { 
+			FileWriter csvWriter = new FileWriter(file);
+			for (Match m : matches) {
+				double diff = m.team2.PredictedElo(players) - m.team1.PredictedElo(players);
+				double likelihoodT1Wins = 1/(1+Math.pow(10, (diff)/400.0));
+				csvWriter.append(m.team1Wins + "," + likelihoodT1Wins + "\n");
+			}
+		} catch (IOException e ) {
+			System.err.println(e);
+		}
+		
+	}
 	public int predictMatch(Match m) {
-		double epsilon = 0.03;
-		double diff = m.team2.PredictedElo(players) - m.team1.PredictedElo(players);
+		double epsilon = 0.02;
+		double diff;
+		if (pitcherRatio == 0) {
+			diff = m.team2.PredictedElo(players) - m.team1.PredictedElo(players);
+		} else {
+			diff = m.team2.PredictedElo(players, pitcherRatio) - m.team1.PredictedElo(players, pitcherRatio);
+		}
 		double likelihoodT1Wins = 1/(1+Math.pow(10, (diff)/400.0));
 		Step(m);
 		
-		if (m.gameTied) return 1;
 		if (likelihoodT1Wins > 0.5 + epsilon) {
 			if (m.team1Wins) return 1;
 			else return 0;

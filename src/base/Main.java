@@ -8,7 +8,7 @@ public class Main {
 
 	
 	public static void main(String[] args) {
-		generatePlateAppRatings();
+		TestPredictions();
 	}
 	public static void countWins(String name) {
 		int numWins = 0;
@@ -124,20 +124,23 @@ public class Main {
 		
 		RatingRun ratings1 = new RatingRun(RatingMethod.EloCombined, both, bothApps);
 		ratings1.processAllMatches(trunc1);
-		//0.5727835
+		// Combined 0.588165
 		
 		RatingRun ratings2 = new RatingRun(RatingMethod.EloBlindTrunc, both, bothApps);
 		ratings2.processAllMatches(trunc1);
-		//0.5661856
+		// Trunc 0.5871421
 
 		RatingRun ratings3 = new RatingRun(RatingMethod.EloGammaAdjust, both, bothApps);
 		ratings3.processAllMatches(trunc1);
-		//0.5727835
+		// Plays 0.6351706
 		
 		
 		System.out.println("Combined " + ratings1.predictMatches(matches2));
+		ratings1.matchPredictionCSV(matches2, "ComboPrediction.csv");
 		System.out.println("Trunc " + ratings2.predictMatches(matches2));
+		ratings2.matchPredictionCSV(matches2, "TruncPrediction.csv");
 		System.out.println("Plays " + ratings3.predictMatches(matches2));
+		ratings3.matchPredictionCSV(matches2, "PlayPrediction.csv");
 	}
 	public static void TestTruncPredictions() {
 		StatLoader sl1 = new StatLoader("GameData/2000-2018/");
@@ -151,6 +154,38 @@ public class Main {
 		ratings.processAllMatches(train);
 		
 		System.out.println(ratings.predictMatches(test));
+	}
+	public static void CompareTruncPitcherWeight() {
+		StatLoader sl1 = new StatLoader("GameData/2000-2018/");
+		StatLoader sl2 = new StatLoader("GameData/2019/");
+		List<Match> matches1 = sl1.getMatches();
+		List<Match> trunc1 = sl1.getTruncMatches();
+		List<Match> matches2 = sl2.getMatches();
+		
+		List<PlateAppearance> appearances1 = sl1.getAppearances();
+		List<PlateAppearance> appearances2 = sl2.getAppearances();
+		
+		List<Match> both = new ArrayList<Match>(matches1);
+		both.addAll(matches2);
+		List<PlateAppearance> bothApps = new ArrayList<PlateAppearance>(appearances1);
+		bothApps.addAll(appearances2);
+		
+		RatingRun ratings1 = new RatingRun(RatingMethod.EloBlindTrunc, both, bothApps, 0.05);
+		ratings1.processAllMatches(matches1);
+		RatingRun ratings2 = new RatingRun(RatingMethod.EloBlindTrunc, both, bothApps, 0.1);
+		ratings2.processAllMatches(matches1);
+		RatingRun ratings3 = new RatingRun(RatingMethod.EloBlindTrunc, both, bothApps);
+		ratings3.processAllMatches(matches1);
+		RatingRun ratings4 = new RatingRun(RatingMethod.EloBlindTrunc, both, bothApps, 0.25);
+		ratings4.processAllMatches(matches1);
+		RatingRun ratings5 = new RatingRun(RatingMethod.EloBlindTrunc, both, bothApps, 0.9);
+		ratings5.processAllMatches(matches1);
+		
+		System.out.println("Pitcher weighted as " + ratings1.pitcherRatio + " of the team. Prediction accuracy: " + ratings1.predictMatches(matches2));
+		System.out.println("Pitcher weighted as " + ratings2.pitcherRatio + " of the team. Prediction accuracy: " + ratings2.predictMatches(matches2));
+		System.out.println("Pitcher weighted as " + ratings3.pitcherRatio + " of the team. Prediction accuracy: " + ratings3.predictMatches(matches2));
+		System.out.println("Pitcher weighted as " + ratings4.pitcherRatio + " of the team. Prediction accuracy: " + ratings4.predictMatches(matches2));
+		System.out.println("Pitcher weighted as " + ratings5.pitcherRatio + " of the team. Prediction accuracy: " + ratings5.predictMatches(matches2));
 	}
 	public static void HomeFieldPctWon() {
 		StatLoader sl = new StatLoader("GameData/2000-2018/");

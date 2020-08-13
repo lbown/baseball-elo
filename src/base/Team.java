@@ -37,6 +37,55 @@ public class Team {
 		}
 		return scoreSum/numPlayers;
 	}
+	public double AverageElo(Map<String, Player> players, double pitcherRatio) {
+		double scoreSum = 0;
+		int numPlayers = 0;
+		double batterRatio = 1-pitcherRatio;
+		int numBatters = 0;
+		int numPitchers = 0;
+		
+		for(PlayerContrib pc : playerContribs) {
+			if (players.get(pc.player.playerCode) != null) {
+				if(pc.player.pos == PosType.Batter) {
+					numBatters++;
+				} else {
+					numPitchers++;
+				}
+			}
+		}
+		if (numPitchers != 1) {
+			System.err.println("You can't have " + numPitchers + " on your team...");
+		}
+		
+		batterRatio = batterRatio / numBatters;
+		
+		float sanityCheck = 0;
+		
+		for(PlayerContrib pc : playerContribs) {
+			if (players.get(pc.player.playerCode) != null) {
+				if(pc.player.pos == PosType.Batter) {
+					scoreSum += players.get(pc.player.playerCode).batterElo() * batterRatio;
+					sanityCheck += batterRatio;
+				} else {
+					scoreSum += players.get(pc.player.playerCode).pitcherElo() * pitcherRatio;
+					sanityCheck += pitcherRatio;
+				}
+			} else {
+				System.err.println("U goofed");
+				//scoreSum += 1500;
+			}
+		}
+		if (sanityCheck < 0.95) {
+			System.out.println("U goofed again, ratio sum is " + sanityCheck);
+			for (PlayerContrib p2 : playerContribs) {
+				System.out.println(p2.player.pos);
+			}
+			System.out.println("Batter Ratio: " + batterRatio);
+			System.out.println("Pitcher Ratio: " + pitcherRatio);
+			System.exit(1);
+		}
+		return scoreSum/sanityCheck;
+	}
 	public double PredictedElo(Map<String, Player> players) {
 		double scoreSum = 0;
 		int numPlayers = 0;
@@ -49,6 +98,34 @@ public class Team {
 			numPlayers++;
 		}
 		return scoreSum / numPlayers;
+	}
+	public double PredictedElo(Map<String, Player> players, double pitcherRatio) {
+		double scoreSum = 0;
+		int numPlayers = 0;
+		double batterRatio = (1-pitcherRatio)/startingPlayerCodes.size();
+		double sumRatios = 0;
+		if (startingPlayerCodes.size() == 0) {
+			for (PlayerContrib pc : playerContribs) {
+				System.out.println(pc.player.playerCode);
+			}
+			System.exit(1);
+		}
+		if (players.get(startingPlayerCodes.get(0)) == null) {
+			scoreSum += 1500 * pitcherRatio;
+		} else {
+			scoreSum += players.get(startingPlayerCodes.get(0)).getElo() * pitcherRatio;
+		}
+		sumRatios += pitcherRatio;
+		
+		for (int i = 1; i < startingPlayerCodes.size(); i++) {
+			if (players.get(startingPlayerCodes.get(i)) == null) {
+				scoreSum += 1500 * batterRatio;
+			} else {
+				scoreSum += players.get(startingPlayerCodes.get(i)).getElo() * batterRatio;
+			}
+			sumRatios += batterRatio;
+		}
+		return scoreSum / sumRatios;
 	}
 
 	

@@ -76,7 +76,7 @@ public class StatLoader {
 		if (matches.containsKey(id) == false) {
 			System.out.println("Can't find match " + id + ".");
 		}
-		matches.get(id).UpdateWithPlays(matchUpdate);
+		//matches.get(id).UpdateWithPlays(matchUpdate);
 		truncMatches.get(id).TruncateWithPlays(matchUpdate);
 		appearances.addAll(matches.get(id).appearances);
 	}
